@@ -16,7 +16,7 @@ from math import nan, log
 from pathlib import Path
 from statistics import median
 from tempfile import TemporaryDirectory
-from db_building.ExampleDb import ExampleDb
+from CoaExampleDb import ExampleDb
 from contextlib import closing
 
 

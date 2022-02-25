@@ -1,0 +1,20 @@
+#########################################
+# BIDIRECTIONAL RECURRENT NEURAL NETWORK#
+#            PARAMETER FILE             #
+#########################################
+
+# RNN ARCHITECTURE
+nn_class: Rnn_keras
+batch_size: 32
+num_batches: 320
+eps_per_kmer_switch: 10
+num_layers: 2
+max_sequence_length: 1000  # Only for example reads
+cell_type: GRU
+layer_size: 16
+name_optimizer: adam
+learning_rate: 0.001
+num_kmer_switches: 2
+dropout_keep_prob: 0.75
+threshold: 0.95
+filter_width: 100
