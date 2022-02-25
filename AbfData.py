@@ -21,6 +21,8 @@ class AbfData:
     def __init__(self, abf_fn, normalization=False, lowpass_freq=80,
                  baseline_threshold=0.65):
         self.abf_fn = Path(abf_fn)
+        # coa_type describes if a coa3,4,5,6. Currently extracted from filename
+        self.coa_type = self.abf_fn.name[:4].lower()
         self.normalization = normalization
         # Convert from KHz to ms
         self.smoothing_sigma = 1 / lowpass_freq
@@ -32,6 +34,14 @@ class AbfData:
     @property
     def raw(self):
         return self._raw
+
+    def get_one_hot(self):
+        """Returns one hot encoding based on COA type"""
+        valid_coas = [3, 4, 5, 6]
+        coa_number = int(self.coa_type[3])
+        one_hot = np.zeros_like(valid_coas)
+        one_hot[valid_coas.index(coa_number)] = 1
+        return one_hot
 
     @raw.setter
     def raw(self, _):
