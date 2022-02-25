@@ -97,7 +97,14 @@ class AbfData:
                     pos_list.append(self.raw[start_idx: end_idx])
         return pos_list
 
-    def get_neg(self, width, nb_neg, unfiltered=False):
+    def get_neg(self, width: int, nb_neg, unfiltered=False):
+        """Get part of the measurement where no cOA crosses the pore
+
+        :param width: width of fragment
+        :param nb_neg: number of negative examples
+        :param unfiltered: If true, provide data without low-pass filter applied
+        :return: list of examples
+        """
         neg_list = []
         for i in range(nb_neg * 100): # take 100 attempts for each neg
             random_idx = random.randint(0, len(self.raw)-width)
