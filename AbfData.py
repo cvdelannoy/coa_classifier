@@ -2,9 +2,11 @@ from pathlib import Path
 import pyabf
 import pyabf.filter
 import numpy as np
+import matplotlib
+# Workaround to view interactive figures
+matplotlib.use('WebAgg')
 import matplotlib.pyplot as plt
 from pathlib import Path
-from dataclasses import dataclass
 import random
 
 
@@ -24,7 +26,8 @@ class AbfData:
         self.smoothing_sigma = 1 / lowpass_freq
         self.raw = None
         self.baseline_level = np.median(self.raw)
-        self.pos_events = self.set_pos_events(baseline_threshold)
+        self.cutoff = self.baseline_level * baseline_threshold
+        self.pos_events = self.set_pos_events()
 
     @property
     def raw(self):
@@ -44,9 +47,8 @@ class AbfData:
         self.unfiltered_raw = self.unfiltered_raw[~np.isnan(abf.sweepY)]
         self.time_vector = abf.sweepX[~np.isnan(abf.sweepY)]
 
-    def set_pos_events(self, fraction):
-        cutoff = fraction * self.baseline_level
-        event_ids = np.where(self.raw < cutoff)[0]
+    def set_pos_events(self):
+        event_ids = np.where(self.raw < self.cutoff)[0]
         # Ugly boiii
         self.flat_pos_indices = event_ids
         step_list = np.diff(event_ids)
@@ -63,10 +65,17 @@ class AbfData:
             event_length = end_idx - start_idx
             event_lengths.append(event_length)
             room_left = width - event_length
-        plt.hist(event_lengths, bins=100)
+        plt.hist(event_lengths, bins=100, range=(0, 500))
         plt.show()
 
-    def get_pos(self, width, unfiltered=False, take_one=False):
+    def get_pos(self, width: int, unfiltered=False, take_one=False):
+        """Get a list of all cOA passing events in this trace
+
+        :param width: Width of the events to output
+        :param unfiltered: If true, do not apply low-pass filter
+        :param take_one: If true, return one randomly selected positive event
+        :return: list of all positive events
+        """
         pos_list = []
         if take_one:
             random.shuffle(self.pos_events)
@@ -103,15 +112,21 @@ class AbfData:
 
 
 if __name__ == '__main__':
-    simulated_file = Path('/mnt/c/Users/benno/PycharmProjects/baseless/coa_detection/output_30_30_30.atf')
-    squiggle_sim = AbfData(simulated_file, lowpass_freq=80)
-    plt.plot(squiggle_sim.raw)
-    plt.show()
+    # General inspection of what squiggle looks like
+    local_file_path = Path(r"/home/bnoordijk/coa_data_mount/data/cOA6/cis/+120mV.abf")
+    # local_file_path = Path(
+    #     r"/home/bnoordijk/coa_data_mount/data/cOA3/cis/cOA3_cis_+120mV_1.abf")
+    squiggle = AbfData(local_file_path, normalization=False, lowpass_freq=80)
+    # print(squiggle.cutoff)
+    # plt.plot(squiggle.raw)
 
-    # local_file_path = Path(r"/mnt/c/Users/benno/Downloads/zooi/+120mV_cOA6.abf")
-    # squiggle = AbfData(local_file_path, normalization=False, lowpass_freq=80)
-    # a = squiggle.get_pos(2000)
-    # b = squiggle.get_neg(2000)
+    a = squiggle.get_pos(250, take_one=True)
+    plt.plot(a)
+
+    # # View squiggle durations
+    # squiggle.plot_hist_pos(250)
+    # a = squiggle.get_pos(2000, take_one=True)
+    # b = squiggle.get_neg(2000, 1)
     # fig, axs = plt.subplots(2, 1)
     # axs[0].plot(a)
     # axs[1].plot(b)
@@ -121,7 +136,9 @@ if __name__ == '__main__':
     # plt.subplot()
     # plt.plot(squiggle.time_vector, squiggle.raw)
     # plt.plot(squiggle.time_vector[event_indices], squiggle.raw[event_indices], '+')
-    # plt.ylabel('pA')
-    # plt.xlabel('Seconds')
-    # plt.show()
+
+    # Add correct labels and show plot
+    plt.ylabel('pA')
+    plt.xlabel('Seconds')
+    plt.show()
 
