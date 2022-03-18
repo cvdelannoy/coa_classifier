@@ -10,7 +10,7 @@ batch_norm: 1
 batch_size: 32
 dropout_keep_prob: 0.8
 eps_per_kmer_switch: 25
-filter_width: 2000
+filter_width: 250
 filters: 10
 kernel_size: 25
 learning_rate: 0.002
