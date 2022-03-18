@@ -17,11 +17,11 @@ def main(args=None):
 
     commands = [
         ('run_production_pipeline',
-         'Generate DBs from read set and generate NNs for several k-mers at once',
+         'Generate DBs from read set and generate NNs for several cOAs at once',
          argparse_dicts.get_run_production_pipeline_parser(),
          run_production_pipeline.main),
         ('train_nn',
-         'Train a single NN to detect a given k-mer',
+         'Train a single NN to detect a given cOA',
          argparse_dicts.get_training_parser(),
          train_coa_nn.main),
         ('build_db',
