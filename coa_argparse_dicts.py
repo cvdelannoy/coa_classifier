@@ -31,7 +31,7 @@ test_abfs = ('--test-abfs', {
 parameter_file = ('--parameter-file', {
     'type': str,
     'required': False,
-    'default': os.path.join(__location__, 'nns/hyperparams/CnnParameterFile.yaml'),
+    'default': os.path.join(__location__, 'nns/hyperparams/CnnParameterFile_coa.yaml'),
     'help': 'a yaml-file containing NN parameters. If none supplied, default values are used.'})
 
 read_index = ('--read-index', {
