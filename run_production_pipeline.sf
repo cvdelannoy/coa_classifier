@@ -48,13 +48,12 @@ rule generate_training_db:
     shell:
         """
         python {__location__} build_db \
-            --fast5-in {input.reads} \
+            --abf-in {input.reads} \
             --db-dir {db_dir}train/{wildcards.target} \
             --target {wildcards.target} \
-            --db-type train \
             --max-nb-examples 20000 \
-            --width {filter_width} \
-            --randomize &> {logs_dir}db_train_{wildcards.target}.log
+            --width {filter_width}  \
+            --nb-example-reads 0 &> {logs_dir}db_train_{wildcards.target}.log
         """
 
 rule generate_test_db:
@@ -68,10 +67,9 @@ rule generate_test_db:
         """
         mkdir -p {db_dir}test/{wildcards.target}
         python {__location__} build_db \
-            --fast5-in {input.reads} \
+            --abf-in {input.reads} \
             --db-dir {db_dir}test/{wildcards.target} \
             --target {wildcards.target} \
-            --db-type test \
             --width {filter_width} \
-            --randomize &>{logs_dir}db_test_{wildcards.target}.log
+            --nb-example-reads 0 &>{logs_dir}db_test_{wildcards.target}.log
         """
