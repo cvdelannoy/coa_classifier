@@ -40,23 +40,24 @@ def main(args):
 
     # --- process abf files ---
     for i, file in enumerate(file_list):
-        try:
-            non_target_name = None if i in target_idx else re.search('cOA[0-9]+', basename(file)).group(0)  # todo: counts on specific naming of files!
-            tr = AbfData(abf_fn=file, normalization=args.normalization, lowpass_freq=80)
-            nb_pos = db.add_training_read(training_read=tr, non_target=non_target_name)
-            if nb_example_reads < args.nb_example_reads and nb_pos > 0:
-                event_name = non_target_name if non_target_name is not None else args.target
-                tr_labels = np.repeat(np.array('bg', dtype=f'<U{len(event_name)}'), len(tr.raw))
-                tr_labels[tr.flat_pos_indices] = event_name
-                np.savez(npz_path + splitext(basename(file))[0], base_labels=tr_labels, raw=tr.raw)
-            db.pack_db()
-            if db.nb_pos > args.max_nb_examples:
-                print('Max number of examples reached')
-                break
-        except (KeyError, ValueError) as e:
-            with open(error_fn, 'a') as efn:
-                efn.write('{fn}\t{err}\n'.format(err=e, fn=basename(file)))
-            continue
+        print(f'Processing {file}')
+        # todo: counts on specific naming of files!
+        non_target_name = None if i in target_idx else re.search('cOA[0-9]+',
+                                                                 basename(file)).group(0)
+        tr = AbfData(abf_fn=file, normalization=args.normalization,
+                     lowpass_freq=80)
+        nb_pos = db.add_training_read(training_read=tr,
+                                      non_target=non_target_name)
+        if nb_example_reads < args.nb_example_reads and nb_pos > 0:
+            event_name = non_target_name if non_target_name is not None else args.target
+            tr_labels = np.repeat(np.array('bg', dtype=f'<U{len(event_name)}'), len(tr.raw))
+            tr_labels[tr.flat_pos_indices] = event_name
+            np.savez(npz_path + splitext(basename(file))[0],
+                     base_labels=tr_labels, raw=tr.raw)
+        db.pack_db()
+        if db.nb_pos > args.max_nb_examples:
+            print('Max number of examples reached')
+            break
 
     db.pack_db()
     if db.nb_pos == 0:
