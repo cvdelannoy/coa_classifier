@@ -4,8 +4,8 @@ import pandas as pd
 from os.path import isdir, dirname, basename, splitext
 from shutil import rmtree
 from pathlib import Path
-from AbfData import AbfData
-from CoaExampleDb import ExampleDb
+from db_building.AbfData import AbfData
+from db_building.CoaExampleDb import ExampleDb
 
 __location__ = dirname(Path(__file__).resolve())
 sys.path.extend([__location__, f'{__location__}/..'])

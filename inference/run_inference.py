@@ -1,9 +1,9 @@
 import sys, signal, os, h5py
 from datetime import datetime
-from helper_functions import parse_output_path
-from ReadTable import ReadTable
 import tensorflow as tf
 import numpy as np
+from helper_functions import parse_output_path
+from inference.ReadTable import ReadTable
 
 def main(args):
     tf.config.threading.set_intra_op_parallelism_threads(1)

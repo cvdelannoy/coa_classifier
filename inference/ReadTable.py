@@ -2,7 +2,7 @@ import numpy as np
 from multiprocessing import Process, Queue
 
 from db_building.AbfData import AbfData
-from ReadManager import ReadManager
+from inference.ReadManager import ReadManager
 
 
 class ReadTable(object):
