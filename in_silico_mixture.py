@@ -1,4 +1,4 @@
-from AbfData import AbfData
+from coa_detection.AbfData import AbfData
 from pathlib import Path
 import numpy as np
 import random

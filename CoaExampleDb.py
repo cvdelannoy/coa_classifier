@@ -2,44 +2,54 @@ import ZODB, ZODB.FileStorage, BTrees.IOBTree
 from os.path import isfile
 import numpy as np
 import random
-from AbfData import AbfData
 from copy import deepcopy
 
 
 class ExampleDb(object):
     """
-    Database storing training examples for a neural network
-    :param db_name: path to database file
-    :param width: width of fragments
-    :param read_only (optional):
+    A class for a database storing training examples for a neural network
     """
     def __init__(self, **kwargs):
+
         self._db = None
+        self.neg_kmers = dict()  # Dict of lists, indices per encountered negative example k-mer
         self._db_empty = True
         self.nb_pos = 0
+        self.nb_neg = 0
         if not isfile(kwargs['db_name']):
+            self.target = kwargs['target']
             self.width = kwargs['width']
         self.db_name = kwargs['db_name']
 
         self.read_only = kwargs.get('read_only', False)
         self.db = self.db_name
 
-    def add_training_read(self, training_read):
-        """Add events of cOA to DB from training read
+    @property
+    def target(self):
+        return self._target
+
+    @target.setter
+    def target(self, target):
+        self._target = target
+
+    def add_training_read(self, training_read, non_target=None):
+        """Add training read with positive and negative read examples of the
+        target k-mer
 
         :param training_read: Object containing a training read
-        :type training_read: AbfData
-        :return: Number of added events
+        :param uncenter_kmer: If set to true, will extract reads where the k-mer
+                              is randomly places somewhere in the read. Not
+                              always in the center
+        :type uncenter_kmer: bool
         """
-        label = training_read.get_one_hot()
-
         with self._db.transaction() as conn:
             # --- add positive examples (if any) ---
             pos_examples = training_read.get_pos(self.width)
-            for _, ex in enumerate(pos_examples):
-                insert_index = len(conn.root.pos)
-                conn.root.pos[insert_index] = ex
-                conn.root.labels[insert_index] = label
+            if not non_target:
+                for i, ex in enumerate(pos_examples):
+                    conn.root.pos[len(conn.root.pos)] = ex
+            else:
+                self.nb_neg += self.add_non_target(pos_examples, non_target, conn)
             nb_new_positives = len(pos_examples)
 
             # --- update record nb positive examples ---
@@ -48,30 +58,72 @@ class ExampleDb(object):
                     self._db_empty = False
             if not self._db_empty:
                 self.nb_pos = conn.root.pos.maxKey()
-        return nb_new_positives
 
-    def get_training_set(self, size=None):
+            # --- add negative examples ---
+            neg_examples = training_read.get_neg(self.width, len(pos_examples))  # add as many pos examples
+            self.nb_neg += self.add_non_target(neg_examples, 'bg', conn)
+            conn.root.neg_kmers = self.neg_kmers
+            return nb_new_positives
+
+    def add_non_target(self, examples, non_target_name, conn):
+        for i, ex in enumerate(examples):
+            if non_target_name in self.neg_kmers:  # CL: kept the name 'kmer', even though we're not detecting k-mers anymore
+                self.neg_kmers[non_target_name].append(self.nb_neg + i)
+            else:
+                self.neg_kmers[non_target_name] = [self.nb_neg + i]
+            conn.root.neg[len(conn.root.neg)] = ex
+        return len(examples)
+
+    def get_training_set(self, size=None, includes=None):
         """
         Return a balanced subset of reads from the DB
         :param size: number of reads to return
+        :param includes: k-mers that should forcefully be included, if available in db
         :return: lists of numpy arrays for training data(x_out) and labels (y_out)
         """
+        if includes is None:
+            includes = []
+        if size is None or size > self.nb_pos or size > self.nb_neg:
+            size = min(self.nb_pos, self.nb_neg)
+        nb_pos = size // 2
+        nb_neg = size - nb_pos
+        ps = random.sample(range(self.nb_pos), nb_pos)
 
-        if size is None or size > self.nb_pos:
-            size = self.nb_pos
-        ps = random.sample(range(self.nb_pos), size)
+        if len(includes):
+            forced_includes = []
+            forced_includes_list = []
+            for k in includes:
+                if k in self.neg_kmers:
+                    forced_includes_list.append(deepcopy(self.neg_kmers[k]))
+
+            # limit to 20% of neg examples
+            nb_neg_forced = nb_neg // 5
+            nf_idx = 0
+            while len(forced_includes) < nb_neg_forced and len(forced_includes_list):
+                forced_includes.append(forced_includes_list[nf_idx].pop())
+                if not len(forced_includes_list[nf_idx]):
+                    forced_includes_list.remove([])
+                nf_idx += 1
+                if nf_idx == len(forced_includes_list):
+                    nf_idx = 0
+            ns = random.sample(range(self.nb_neg), nb_neg - len(forced_includes))
+            ns.extend(forced_includes)
+        else:
+            ns = random.sample(range(self.nb_neg), nb_neg)
 
         with self._db.transaction() as conn:
-            examples_pos = [(conn.root.pos[n], conn.root.labels[n]) for n in ps]
-
-        random.shuffle(examples_pos)
-        x_out, y_out = zip(*examples_pos)
+            examples_pos = [(conn.root.pos[n], 1) for n in ps]
+            examples_neg = [(conn.root.neg[n], 0) for n in ns]
+        data_out = examples_pos + examples_neg
+        random.shuffle(data_out)
+        x_out, y_out = zip(*data_out)
         return x_out, np.array(y_out)
 
     def pack_db(self):
         self._db.pack()
         with self._db.transaction() as conn:
             self.nb_pos = conn.root.pos.maxKey()
+            self.nb_neg = conn.root.neg.maxKey()
 
     @property
     def db(self):
@@ -89,11 +141,15 @@ class ExampleDb(object):
         if is_existing_db:
             with self._db.transaction() as conn:
                 self.width = conn.root.width
+                self.target = conn.root.target
                 self.nb_pos = len(conn.root.pos)
+                self.nb_neg = len(conn.root.neg)
+                self.neg_kmers = conn.root.neg_kmers
         else:
             with self._db.transaction() as conn:
+                conn.root.target = self.target[0]
                 conn.root.width = self.width
                 conn.root.pos = BTrees.IOBTree.BTree()
-                conn.root.labels = BTrees.IOBTree.BTree()
+                conn.root.neg = BTrees.IOBTree.BTree()
         if self.nb_pos > 0:
             self._db_empty = False

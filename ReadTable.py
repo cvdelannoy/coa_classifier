@@ -3,6 +3,7 @@ from multiprocessing import Process, Queue
 
 from AbfData import AbfData
 from ReadManager import ReadManager
+import tensorflow as tf
 
 
 

@@ -1,6 +1,7 @@
 import argparse
 import os, sys
 
+sys.path.append(f'{os.path.dirname(__file__)}/..')
 from helper_functions import parse_output_path
 
 

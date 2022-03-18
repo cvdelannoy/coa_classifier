@@ -6,8 +6,8 @@ import coa_argparse_dicts as argparse_dicts
 
 import build_coa_db
 import train_coa_nn
-import compile_coa_model
-import run_inference
+import compile_coa_model # todo
+import run_inference # todo
 
 import run_production_pipeline
 

@@ -1,4 +1,4 @@
-import re
+import os, sys, re
 import random
 
 import yaml
@@ -12,6 +12,8 @@ from os.path import basename, splitext
 from datetime import datetime
 
 from CoaExampleDb import ExampleDb
+
+sys.path.append(f'{os.path.dirname(__file__)}/..')
 
 import reader
 from helper_functions import parse_output_path, plot_timeseries, parse_input_path
