@@ -48,22 +48,21 @@ class ExampleDb(object):
             if not non_target:
                 for i, ex in enumerate(pos_examples):
                     conn.root.pos[len(conn.root.pos)] = ex
+                    self.nb_pos = conn.root.pos.maxKey()
             else:
                 self.nb_neg += self.add_non_target(pos_examples, non_target, conn)
-            nb_new_positives = len(pos_examples)
+            nb_examples = len(pos_examples)
 
             # --- update record nb positive examples ---
             if self._db_empty:
-                if nb_new_positives > 0:
+                if nb_examples > 0:
                     self._db_empty = False
-            if not self._db_empty:
-                self.nb_pos = conn.root.pos.maxKey()
 
             # --- add negative examples ---
-            neg_examples = training_read.get_neg(self.width, len(pos_examples))  # add as many pos examples
+            neg_examples = training_read.get_neg(self.width, len(pos_examples))
             self.nb_neg += self.add_non_target(neg_examples, 'bg', conn)
             conn.root.neg_kmers = self.neg_kmers
-            return nb_new_positives
+            return nb_examples
 
     def add_non_target(self, examples, non_target_name, conn):
         for i, ex in enumerate(examples):
@@ -122,8 +121,8 @@ class ExampleDb(object):
     def pack_db(self):
         self._db.pack()
         with self._db.transaction() as conn:
-            self.nb_pos = conn.root.pos.maxKey()
-            self.nb_neg = conn.root.neg.maxKey()
+            self.nb_pos = conn.root.pos.maxKey() if conn.root.pos else 0
+            self.nb_neg = conn.root.neg.maxKey() if conn.root.neg else 0
 
     @property
     def db(self):
