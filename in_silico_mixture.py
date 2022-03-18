@@ -1,9 +1,7 @@
-import AbfData
+from db_building import AbfData
 from pathlib import Path
 import numpy as np
 import random
-from numpy.random import choice
-import matplotlib.pyplot as plt
 
 # Parts taken from https://github.com/swharden/pyABF/blob/master/docs/advanced/creating-waveforms/src/synth-atf.py
 

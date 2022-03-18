@@ -1,10 +1,8 @@
 import numpy as np
 from multiprocessing import Process, Queue
 
-from AbfData import AbfData
+from db_building.AbfData import AbfData
 from ReadManager import ReadManager
-import tensorflow as tf
-
 
 
 class ReadTable(object):

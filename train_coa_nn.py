@@ -11,7 +11,7 @@ from bokeh.io import save, output_file
 from os.path import basename, splitext
 from datetime import datetime
 
-from CoaExampleDb import ExampleDb
+from db_building.CoaExampleDb import ExampleDb
 
 sys.path.append(f'{os.path.dirname(__file__)}/..')
 
