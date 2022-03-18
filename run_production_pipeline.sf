@@ -7,8 +7,6 @@ nn_dir = '{{ nn_dir }}'
 logs_dir= '{{ logs_dir }}'
 parameter_file = '{{ parameter_file }}'
 filter_width = "{{ filter_width }}"
-hdf_path = '{{ hdf_path }}'
-read_index = '{{ read_index }}'
 
 rule target:
     input:
@@ -52,12 +50,10 @@ rule generate_training_db:
         python {__location__} build_db \
             --fast5-in {input.reads} \
             --db-dir {db_dir}train/{wildcards.target} \
-            --target {wildcards.target} {% if read_index_bool %} --read-index {read_index} {% endif %} \
+            --target {wildcards.target} \
             --db-type train \
             --max-nb-examples 20000 \
             --width {filter_width} \
-            --hdf-path {hdf_path} \
-            --uncenter-kmer \
             --randomize &> {logs_dir}db_train_{wildcards.target}.log
         """
 
@@ -74,10 +70,8 @@ rule generate_test_db:
         python {__location__} build_db \
             --fast5-in {input.reads} \
             --db-dir {db_dir}test/{wildcards.target} \
-            --target {wildcards.target} {% if read_index_bool %} --read-index {read_index} {% endif %} \
+            --target {wildcards.target} \
             --db-type test \
             --width {filter_width} \
-            --hdf-path {hdf_path} \
-            --uncenter-kmer \
             --randomize &>{logs_dir}db_test_{wildcards.target}.log
         """
