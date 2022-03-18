@@ -3,7 +3,7 @@ from shutil import move
 from pathlib import Path
 from os.path import basename
 
-from inference.GracefulKiller import GracefulKiller
+import GracefulKiller
 
 
 class ReadManager(object):

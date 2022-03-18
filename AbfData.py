@@ -4,7 +4,6 @@ import pyabf.filter
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
-from dataclasses import dataclass
 import random
 
 
