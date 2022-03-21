@@ -61,14 +61,19 @@ class AbfData:
         events = np.split(event_ids, cut_points)
         return [event for event in events if len(event) > 2]
 
-    def plot_hist_pos(self):
-        """Plot a histogram of event_duration lengths"""
+    def get_event_lengths(self):
+        """Get duration of events"""
         event_lengths = []
         for event in self.pos_events:
             start_idx = event[0]
             end_idx = event[-1]
             event_length = end_idx - start_idx
             event_lengths.append(event_length)
+        return event_lengths
+
+    def plot_hist_pos(self):
+        """Plot a histogram of event duration lengths"""
+        event_lengths = self.get_event_lengths()
         plt.hist(event_lengths, bins=100)
         plt.show()
 
