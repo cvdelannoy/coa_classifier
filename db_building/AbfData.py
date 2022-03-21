@@ -16,14 +16,14 @@ class AbfData:
     :type lowpass_freq: float
     """
     def __init__(self, abf_fn, normalization=False, lowpass_freq=80,
-                 baseline_threshold=0.65):
+                 baseline_fraction=0.65):
         self.abf_fn = Path(abf_fn)
         self.normalization = normalization
         # Convert from KHz to ms
         self.smoothing_sigma = 1 / lowpass_freq
         self.raw = None
         self.baseline_level = np.median(self.raw)
-        self.pos_events = self.set_pos_events(baseline_threshold)
+        self.pos_events = self.set_pos_events(baseline_fraction)
 
     @property
     def raw(self):
@@ -31,6 +31,7 @@ class AbfData:
 
     @raw.setter
     def raw(self, _):
+        """The raw signal, after applying low-pass filter"""
         if self.abf_fn.suffix == '.atf':
             abf = pyabf.ATF(self.abf_fn)
         else:
@@ -44,6 +45,12 @@ class AbfData:
         self.time_vector = abf.sweepX[~np.isnan(abf.sweepY)]
 
     def set_pos_events(self, fraction):
+        """Find all events where current drops below theshold,
+        and set them as positive events. Output is saved in self.pos_events.
+
+        :param fraction: Fraction of boseline to use as cutoff for positive event
+        :return: List of all indices in raw signal that contain positive events.
+        """
         cutoff = fraction * self.baseline_level
         event_ids = np.where(self.raw < cutoff)[0]
         # Ugly boiii
@@ -54,18 +61,32 @@ class AbfData:
         events = np.split(event_ids, cut_points)
         return [event for event in events if len(event) > 2]
 
-    def plot_hist_pos(self, width):
+    def plot_hist_pos(self):
+        """Plot a histogram of event_duration lengths"""
         event_lengths = []
         for event in self.pos_events:
             start_idx = event[0]
             end_idx = event[-1]
             event_length = end_idx - start_idx
             event_lengths.append(event_length)
-            room_left = width - event_length
         plt.hist(event_lengths, bins=100)
         plt.show()
 
+    def plot_full_signal(self):
+        """Plot the complete raw signal"""
+        plt.plot(squiggle_sim.raw)
+        plt.ylabel('pA')
+        plt.xlabel('Seconds')
+        plt.show()
+
     def get_pos(self, width, unfiltered=False, take_one=False):
+        """Get positive events
+
+        :param width: Width of positive events
+        :param unfiltered: If true, do not apply low-pass filter
+        :param take_one: If true, return only one positive
+        :return: list with positive events
+        """
         pos_list = []
         if take_one:
             random.shuffle(self.pos_events)
@@ -88,6 +109,7 @@ class AbfData:
         return pos_list
 
     def get_neg(self, width, nb_neg, unfiltered=False):
+        """Get negative examples from signal, i.e. snippets of the baseline"""
         neg_list = []
         for i in range(nb_neg * 100): # take 100 attempts for each neg
             random_idx = random.randint(0, len(self.raw)-width)
