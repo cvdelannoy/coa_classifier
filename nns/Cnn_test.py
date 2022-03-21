@@ -129,7 +129,7 @@ class NeuralNetwork(object):
                 self.model.history.history[metric][-1] = 1e-10
             self.history[metric].extend(self.model.history.history[metric])
 
-    def predict(self, x, clean_signal=True, return_probs=False):
+    def predict(self, x, return_probs=False):
         """Given sequences input as x, predict if they contain target k-mer.
         Assumes the sequence x is a read that has been normalised,
         but not cut into smaller chunks.
@@ -143,13 +143,8 @@ class NeuralNetwork(object):
         :return: unnormalized predicted values
         :rtype: np.array of posteriors
         """
-        offset = self.filter_width // 2
-        ho = offset // 2
-        lb, rb = self.hfw - ho, self.hfw + ho + 1
-        idx = np.arange(self.filter_width, len(x) + offset, offset)
-        x_batched = [x[si:ei] for si, ei in zip(idx-self.filter_width, idx)]
 
-        x_pad = np.expand_dims(pad_sequences(x_batched, maxlen=self.filter_width,
+        x_pad = np.expand_dims(pad_sequences(x, maxlen=self.filter_width,
                                              padding='post',
                                              truncating='post',
                                              dtype='float32'), -1)
@@ -158,10 +153,10 @@ class NeuralNetwork(object):
         y_hat = posteriors > self.threshold
         y_out = np.zeros(len(x), dtype=int)
         for i, yh in enumerate(y_hat):
-            y_out[lb + i * offset: rb + i * offset] = yh
-        if return_probs:
-            posteriors_out = np.zeros(len(x), dtype=float)
-            for i, p in enumerate(posteriors):
-                posteriors_out[lb+i*offset: rb + i * offset] = p
-            return y_out, posteriors_out
+            y_out[i] = yh
+        # if return_probs:
+        #     posteriors_out = np.zeros(len(x), dtype=float)
+        #     for i, p in enumerate(posteriors):
+        #         posteriors_out[lb+i*offset: rb + i * offset] = p
+        #     return y_out, posteriors_out
         return y_out
