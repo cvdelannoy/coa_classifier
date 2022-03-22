@@ -43,26 +43,24 @@ class ExampleDb(object):
         :type uncenter_kmer: bool
         """
         with self._db.transaction() as conn:
-            # --- add positive examples (if any) ---
             pos_examples = training_read.get_pos(self.width)
-            if not non_target:
-                for i, ex in enumerate(pos_examples):
+            for i, ex in enumerate(pos_examples):
+                if non_target:
+                    conn.root.neg[len(conn.root.neg)] = ex
+                else:
                     conn.root.pos[len(conn.root.pos)] = ex
-                    self.nb_pos = conn.root.pos.maxKey()
-            else:
-                self.nb_neg += self.add_non_target(pos_examples, non_target, conn)
-            nb_examples = len(pos_examples)
+            self.nb_pos = conn.root.pos.maxKey() if conn.root.pos else 0
+            self.nb_neg = conn.root.neg.maxKey() if conn.root.neg else 0
 
-            # --- update record nb positive examples ---
-            if self._db_empty:
-                if nb_examples > 0:
-                    self._db_empty = False
+        # --- add positive examples (if any) ---
+        nb_examples = len(pos_examples)
 
-            # --- add negative examples ---
-            neg_examples = training_read.get_neg(self.width, len(pos_examples))
-            self.nb_neg += self.add_non_target(neg_examples, 'bg', conn)
-            conn.root.neg_kmers = self.neg_kmers
-            return nb_examples
+        # --- update record nb positive examples ---
+        if self._db_empty:
+            if nb_examples > 0:
+                self._db_empty = False
+
+        return nb_examples
 
     def add_non_target(self, examples, non_target_name, conn):
         for i, ex in enumerate(examples):
@@ -73,42 +71,18 @@ class ExampleDb(object):
             conn.root.neg[len(conn.root.neg)] = ex
         return len(examples)
 
-    def get_training_set(self, size=None, includes=None):
+    def get_training_set(self, size=None):
         """
         Return a balanced subset of reads from the DB
         :param size: number of reads to return
-        :param includes: k-mers that should forcefully be included, if available in db
         :return: lists of numpy arrays for training data(x_out) and labels (y_out)
         """
-        if includes is None:
-            includes = []
         if size is None or size > self.nb_pos or size > self.nb_neg:
             size = min(self.nb_pos, self.nb_neg)
         nb_pos = size // 2
         nb_neg = size - nb_pos
         ps = random.sample(range(self.nb_pos), nb_pos)
-
-        if len(includes):
-            forced_includes = []
-            forced_includes_list = []
-            for k in includes:
-                if k in self.neg_kmers:
-                    forced_includes_list.append(deepcopy(self.neg_kmers[k]))
-
-            # limit to 20% of neg examples
-            nb_neg_forced = nb_neg // 5
-            nf_idx = 0
-            while len(forced_includes) < nb_neg_forced and len(forced_includes_list):
-                forced_includes.append(forced_includes_list[nf_idx].pop())
-                if not len(forced_includes_list[nf_idx]):
-                    forced_includes_list.remove([])
-                nf_idx += 1
-                if nf_idx == len(forced_includes_list):
-                    nf_idx = 0
-            ns = random.sample(range(self.nb_neg), nb_neg - len(forced_includes))
-            ns.extend(forced_includes)
-        else:
-            ns = random.sample(range(self.nb_neg), nb_neg)
+        ns = random.sample(range(self.nb_neg), nb_neg)
 
         with self._db.transaction() as conn:
             examples_pos = [(conn.root.pos[n], 1) for n in ps]
@@ -143,7 +117,6 @@ class ExampleDb(object):
                 self.target = conn.root.target
                 self.nb_pos = len(conn.root.pos)
                 self.nb_neg = len(conn.root.neg)
-                self.neg_kmers = conn.root.neg_kmers
         else:
             with self._db.transaction() as conn:
                 conn.root.target = self.target[0]
