@@ -96,14 +96,15 @@ class AbfData:
         if take_one:
             random.shuffle(self.pos_events)
         for event in self.pos_events:
-            start_idx = event[0]
+            # Provide a small part of the baseline before the event
+            start_idx = event[0] - 5
             end_idx = event[-1]
             event_length = end_idx - start_idx
             room_left = width - event_length
             if room_left > 0:
-                random_offset = random.randint(0, room_left)
-                start_idx -= random_offset
-                end_idx += room_left - random_offset
+                # random_offset = random.randint(0, room_left)
+                # start_idx -= random_offset
+                end_idx += room_left
                 assert (end_idx - start_idx) == width
                 if take_one:
                     return self.unfiltered_raw[start_idx: end_idx]
