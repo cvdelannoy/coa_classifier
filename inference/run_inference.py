@@ -3,7 +3,7 @@ import tensorflow as tf
 import numpy as np
 from db_building.AbfData import AbfData
 from collections import Counter
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, balanced_accuracy_score
 
 # Map target coa to correct index
 TARGET_TO_INDEX = {'cOA4': 0,
@@ -65,6 +65,9 @@ def main(args):
     y_pred_list = []
 
     for abf in Path(args.abf_in).iterdir():
+        # # Uncomment to omit the coa5 file
+        # if 'cOA5' in abf.name:
+        #     continue
         print(f'Processing {abf.name}')
         y_pred = inference_model.predict_from_file(str(abf))
         true_coa = abf.name[:4]
@@ -73,4 +76,5 @@ def main(args):
             y_pred_list.extend([coa_pred] * count)
 
     print(confusion_matrix(y_true, y_pred_list))
+    print('Balanced accuracy', balanced_accuracy_score(y_true, y_pred_list))
 
