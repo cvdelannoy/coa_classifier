@@ -1,5 +1,5 @@
 
-# jinja args: location, db_dir, nn_dir, width, hdf_path, uncenter_kmer
+# jinja args: location, db_dir, nn_dir, width
 
 __location__ = "{{ __location__ }}"
 db_dir = '{{ db_dir }}'
@@ -17,7 +17,6 @@ rule target_dbs:
     input:
         expand('{{ db_dir }}train/{target}/db.fs', target={{ kmer_list }}),
         expand('{{ db_dir }}test/{target}/db.fs', target={{ kmer_list }})
-
 
 rule generate_nns:
     input:
@@ -51,7 +50,6 @@ rule generate_training_db:
             --abf-in {input.reads} \
             --db-dir {db_dir}train/{wildcards.target} \
             --target {wildcards.target} \
-            --max-nb-examples 20000 \
             --width {filter_width}  \
             --nb-example-reads 0 &> {logs_dir}db_train_{wildcards.target}.log
         """
