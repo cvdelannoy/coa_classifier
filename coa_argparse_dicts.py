@@ -34,12 +34,6 @@ parameter_file = ('--parameter-file', {
     'default': os.path.join(__location__, 'nns/hyperparams/CnnParameterFile_coa.yaml'),
     'help': 'a yaml-file containing NN parameters. If none supplied, default values are used.'})
 
-read_index = ('--read-index', {
-    'type': str,
-    'required': False,
-    'help': 'Supply index file denoting which reads should be training reads and which should be test.'
-})
-
 # --- outputs ---
 db_dir = ('--db-dir', {
     'type': str,
@@ -67,23 +61,9 @@ normalization = ('--normalization', {
     'help': 'Specify how raw data should be normalized [default: median]'
 })
 
-db_type = ('--db-type', {
-    'type': str,
-    'choices': ['train', 'test'],
-    'default': 'train',
-    'help': 'Denote whether the db is train or test. Only relevant if read index file is supplied [default: train]'
-})
-
 silent = ('--silent', {
     'action': 'store_true',
     'help': 'Run without printing to console.'
-})
-
-uncenter_target = ('--uncenter-target', {
-    'action': "store_true",
-    'default': False,
-    'help': 'If this flag is provided, targets are not always centered in '
-            'the read'
 })
 
 cores = ('--cores', {
@@ -104,7 +84,7 @@ def get_run_production_pipeline_parser():
     parser = argparse.ArgumentParser(description='Generate DBs from read sets and generate RNNs for several k-mers '
                                                  'at once')
     for arg in (training_abfs, test_abfs, out_dir, coa_list, cores,
-                parameter_file, uncenter_target, read_index):
+                parameter_file):
         parser.add_argument(arg[0], **arg[1])
     return parser
 
@@ -190,8 +170,7 @@ def get_build_db_parser():
     })
 
     for arg in (abf_in, db_dir, normalization, target, width,
-                read_index, db_type, nb_example_reads,
-                max_nb_examples):
+                nb_example_reads, max_nb_examples):
         parser.add_argument(arg[0], **arg[1])
     return parser
 
