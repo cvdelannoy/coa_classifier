@@ -1,60 +1,50 @@
-import sys, signal, os, h5py
-from datetime import datetime
+from pathlib import Path
 import tensorflow as tf
 import numpy as np
-from helper_functions import parse_output_path
-from inference.ReadTable import ReadTable
+from db_building.AbfData import AbfData
+from collections import Counter
+
+TARGET_TO_INDEX = {'cOA4': 0,
+                   'cOA5': 1,
+                   'cOA6': 2}
+
+class Inference:
+    def __init__(self, nn_dir):
+        """
+
+        :param nn_dir: Path to directory that contains folders with cOA?/nn.h5 files
+        :type nn_dir: Path
+        """
+        self._nn_dir = nn_dir
+        self.model_dict, self.input_width = self.load_models()
+
+    def load_models(self):
+        model_dict = {}
+        all_model_files = list(self._nn_dir.glob('cOA?/nn.h5'))
+        assert all_model_files, 'No generated neural networks were found'
+        for f in all_model_files:
+            target = f.parts[-2]
+            model = tf.keras.models.load_model(f, compile=False)
+            model_dict[target] = model
+        input_width = model.input_shape[1]
+        return model_dict, input_width
+
+    def predict_from_file(self, abf_path):
+        abf = AbfData(abf_path)
+        events = abf.get_pos(self.input_width)
+        x_pad = np.expand_dims(events, -1)
+        prediction = np.zeros((len(events), len(self.model_dict)))
+        for target, model in self.model_dict.items():
+            index = TARGET_TO_INDEX[target]
+            prediction[:, index] = model.predict(x_pad).flatten()
+
+        highest_index = np.argmax(prediction, axis=1)
+        return Counter(highest_index)
 
 def main(args):
-    tf.config.threading.set_intra_op_parallelism_threads(1)
-    tf.config.threading.set_inter_op_parallelism_threads(1)
-    print('Loading model...')
-    mod = tf.keras.models.load_model(args.model)
-    with h5py.File(args.model, 'r') as fh:
-        kmer_list = fh.attrs['compound_list'].split(',')
-    print(f'Done!')
-    pos_reads_dir = parse_output_path(args.out_dir + 'pos_reads')
+    inference_model = Inference(args.model)
 
-    abundance_array = np.zeros(len(kmer_list))
-
-    # Load read table, start table manager
-    read_table = ReadTable(args.abf_in, pos_reads_dir)
-    read_manager_process = read_table.init_table()
-
-    # ensure processes are ended after exit
-    def graceful_shutdown(sig, frame):
-        print("shutting down")
-        read_manager_process.terminate()
-        read_manager_process.join()
-        sys.exit(0)
-
-    # Differentiate between inference modes by defining when loop stops
-    if args.inference_mode == 'watch':
-        signal.signal(signal.SIGINT, graceful_shutdown)
-        def end_condition():
-            return True
-    elif args.inference_mode == 'once':
-        def end_condition():
-            return len(os.listdir(args.abf_in)) != 0
-    else:
-        raise ValueError(f'{args.inference_mode} is not a valid inference mode')
-    start_time = datetime.now()
-    # Start inference loop
-    while end_condition():
-        read_id, read_list = read_table.get_read_to_predict()
-        if read_list is None: continue
-        for read in read_list:
-            read_tensor = tf.expand_dims(tf.ragged.constant([read]), -1)
-            abundance_array += mod(read_tensor).numpy()
-        read_table.update_prediction(read_id, np.zeros(len(read_id), dtype=bool))
-    else:
-        run_time = datetime.now() - start_time
-        read_manager_process.terminate()
-        read_manager_process.join()
-        print(f'rutime was {run_time.seconds} s')
-        freq_array = abundance_array / max(abundance_array.sum(), 1)
-        abundance_txt = 'kmer,abundance,frequency\n' + \
-                        '\n'.join([f'{km},{ab},{fr}' for km, ab, fr in zip(kmer_list, abundance_array, freq_array)])
-        with open(f'{args.out_dir}abundance_estimation.csv', 'w') as fh:
-            fh.write(abundance_txt)
-
+    for abf in Path(args.abf_in).iterdir():
+        print(abf.name)
+        print(inference_model.predict_from_file(abf))
+        print('')
