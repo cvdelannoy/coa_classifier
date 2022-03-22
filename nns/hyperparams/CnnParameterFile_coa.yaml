@@ -5,7 +5,7 @@
 
 
 # CNN ARCHITECTURE
-nn_class: Cnn_test
+nn_class: Cnn
 batch_norm: 1
 batch_size: 32
 dropout_keep_prob: 0.8
