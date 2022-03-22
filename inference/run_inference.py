@@ -3,6 +3,7 @@ import tensorflow as tf
 import numpy as np
 from db_building.AbfData import AbfData
 from collections import Counter
+from sklearn.metrics import confusion_matrix
 
 # Map target coa to correct index
 TARGET_TO_INDEX = {'cOA4': 0,
@@ -35,7 +36,7 @@ class CoaInference:
         return model_dict, input_width
 
     def predict_from_file(self, abf_path):
-        """Takes path to single abf file and returns counts of cOAs
+        """Counts cOAs in single input file
 
         :param abf_path: path to .abf file
         :type abf_path: str
@@ -45,11 +46,14 @@ class CoaInference:
         abf = AbfData(abf_path)
         events = abf.get_pos(self.input_width)
         x_pad = np.expand_dims(events, -1)
+
+        # ndarray, first axis is event no, second axis per-coa confidence score
         prediction = np.zeros((len(events), len(self.model_dict)))
         for target, model in self.model_dict.items():
             index = TARGET_TO_INDEX[target]
             prediction[:, index] = model.predict(x_pad).flatten()
 
+        # Find which of the three models predicted the highest score
         highest_index = np.argmax(prediction, axis=1)
         labels = [INDEX_TO_TARGET[i] for i in highest_index]
         return Counter(labels)
@@ -57,7 +61,16 @@ class CoaInference:
 def main(args):
     inference_model = CoaInference(args.nn_dir)
 
+    y_true = []
+    y_pred_list = []
+
     for abf in Path(args.abf_in).iterdir():
-        print(abf.name)
-        print(inference_model.predict_from_file(str(abf)))
-        print('')
+        print(f'Processing {abf.name}')
+        y_pred = inference_model.predict_from_file(str(abf))
+        true_coa = abf.name[:4]
+        y_true.extend([true_coa] * sum(y_pred.values()))
+        for coa_pred, count in y_pred.items():
+            y_pred_list.extend([coa_pred] * count)
+
+    print(confusion_matrix(y_true, y_pred_list))
+
