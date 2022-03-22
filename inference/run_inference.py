@@ -42,7 +42,7 @@ class Inference:
         return Counter(highest_index)
 
 def main(args):
-    inference_model = Inference(args.model)
+    inference_model = Inference(args.nn_dir)
 
     for abf in Path(args.abf_in).iterdir():
         print(abf.name)
