@@ -1,6 +1,5 @@
 import sys, re
 import numpy as np
-import pandas as pd
 from os.path import isdir, dirname, basename, splitext
 from shutil import rmtree
 from pathlib import Path
@@ -10,7 +9,7 @@ from db_building.CoaExampleDb import ExampleDb
 __location__ = dirname(Path(__file__).resolve())
 sys.path.extend([__location__, f'{__location__}/..'])
 
-from helper_functions import parse_output_path, parse_input_path
+from resources.helper_functions import parse_output_path, parse_input_path
 
 
 def main(args):

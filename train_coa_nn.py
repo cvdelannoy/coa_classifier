@@ -1,21 +1,17 @@
 import os, sys, re
-import random
 
 import yaml
 import pickle
 import importlib
 import tensorflow as tf
-import numpy as np
 
-from bokeh.io import save, output_file
-from os.path import basename, splitext
 from datetime import datetime
 
 from db_building.CoaExampleDb import ExampleDb
 
 sys.path.append(f'{os.path.dirname(__file__)}/..')
 
-from helper_functions import parse_output_path, parse_input_path
+from resources.helper_functions import parse_output_path, parse_input_path
 
 
 def load_db(db_dir, read_only=False):

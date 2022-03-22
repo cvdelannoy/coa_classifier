@@ -8,19 +8,17 @@
 nn_class: Cnn_test
 batch_norm: 1
 batch_size: 16
-dropout_keep_prob: 0.9
+dropout_keep_prob: 0.8
 eps_per_kmer_switch: 250
 filter_width: 250
-filters: 6
+filters: 10
 kernel_size: 25
-learning_rate: 0.002
+learning_rate: 0.001
 max_sequence_length: 15000
 num_batches: 96
 num_kmer_switches: 1
 num_layers: 2
-pool_size: 12
+pool_size: 10
 
 # --- COMPILED MODEL PARAMS ---
-threshold: 6.21
-filter_stride: 125
-k_frac: 0.65
+threshold: 0
