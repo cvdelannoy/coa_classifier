@@ -6,7 +6,7 @@ import coa_argparse_dicts as argparse_dicts
 
 from db_building import build_coa_db
 import train_coa_nn
-from inference import run_inference, compile_coa_model
+from inference import run_inference
 
 import run_production_pipeline
 
@@ -29,13 +29,9 @@ def main(args=None):
          argparse_dicts.get_build_db_parser(),
          build_coa_db.main),
         ('run_inference',
-         'Start up inference routine and watch a fast5 directory for reads.',
+         'Start up inference routine and classify occurences of cOA in abf file',
          argparse_dicts.get_run_inference_parser(),
          run_inference.main),
-        ('compile_model',
-         'Compile a multi-network model from single models, for use in run_inference.',
-         argparse_dicts.get_compile_model_parser(),
-         compile_coa_model.main)
     ]
 
     parser = argparse.ArgumentParser(

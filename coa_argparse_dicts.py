@@ -1,5 +1,6 @@
 import argparse
 import os, sys
+from pathlib import Path
 
 sys.path.append(f'{os.path.dirname(__file__)}/..')
 from helper_functions import parse_output_path
@@ -176,22 +177,14 @@ def get_build_db_parser():
 
 
 def get_run_inference_parser():
-    inference_mode = ('--inference-mode', {
-        'type': str,
-        'choices': ['watch', 'once'],
-        'default': 'watch',
-        'help': 'Run inference [once] on fast5s available in folder, or [watch] folder indefinitely for new reads [default: watch]'
-    })
-
-    model = ('--model', {
-        'type': str,
+    nn_dir = ('--nn-dir', {
+        'type': Path,
         'required': True,
-        'help': 'Combined k-mer model to use for inference.'
+        'help': 'Directory where produced networks are stored.'
     })
 
-    parser = argparse.ArgumentParser(description='Start up inference routine for abf files. Either continue'
-                                                 'watching a folder or run once for all files present.')
-    for arg in (abf_in, out_dir, model, inference_mode):
+    parser = argparse.ArgumentParser(description='Start up inference for abf files.')
+    for arg in (abf_in, out_dir, nn_dir):
         parser.add_argument(arg[0], **arg[1])
     return parser
 
