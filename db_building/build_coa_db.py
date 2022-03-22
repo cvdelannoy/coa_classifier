@@ -17,16 +17,9 @@ def main(args):
     out_path = parse_output_path(args.db_dir)
     if isdir(out_path):
         rmtree(out_path)
-    if args.read_index:
-        read_index_df = pd.read_csv(args.read_index, index_col=0)
-        if args.db_type == 'train':
-            file_list = list(read_index_df.query(f'fold').fn)
-        else:  # test
-            file_list = list(read_index_df.query(f'fold == False').fn)
-    else:
-        file_list = parse_input_path(args.abf_in, pattern='*.abf')
+
+    file_list = parse_input_path(args.abf_in, pattern='*.abf')
     db_name = out_path+'db.fs'
-    error_fn = out_path+'failed_reads.txt'
     npz_path = out_path + 'test_squiggles/'
     npz_path = parse_output_path(npz_path)
 
