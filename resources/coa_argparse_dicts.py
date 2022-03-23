@@ -3,7 +3,7 @@ import os, sys
 from pathlib import Path
 
 sys.path.append(f'{os.path.dirname(__file__)}/..')
-from helper_functions import parse_output_path
+from resources.helper_functions import parse_output_path
 
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
