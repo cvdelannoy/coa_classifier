@@ -70,6 +70,7 @@ def main(args):
         #     continue
         print(f'Processing {abf.name}')
         y_pred = inference_model.predict_from_file(str(abf))
+        print(y_pred)
         true_coa = abf.name[:4]
         y_true.extend([true_coa] * sum(y_pred.values()))
         for coa_pred, count in y_pred.items():
