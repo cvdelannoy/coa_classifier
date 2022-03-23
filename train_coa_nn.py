@@ -26,8 +26,7 @@ def load_db(db_dir, read_only=False):
     if db_dir[-1] != '/':
         db_dir += '/'
     db = ExampleDb(db_name=db_dir + 'db.fs', read_only=read_only)
-    squiggles = parse_input_path(db_dir + 'test_squiggles')
-    return db, squiggles
+    return db
 
 
 def train(parameter_file, training_data, test_data, plots_path=None,
@@ -44,18 +43,12 @@ def train(parameter_file, training_data, test_data, plots_path=None,
         raise ValueError(f'{type(parameter_file)} is not a valid data type for a parameter file')
 
     # Load train & test data
-    test_db, ts_npzs = load_db(test_data, read_only=True)
-    train_db, train_npzs = load_db(training_data, read_only=True)
+    test_db = load_db(test_data, read_only=True)
+    train_db = load_db(training_data, read_only=True)
     nb_examples = params['batch_size'] * params['num_batches']
 
     # Create save-file for model if required
     cp_callback = None
-    if save_model:
-        save_model_path = parse_output_path(save_model)
-        cp_callback = tf.keras.callbacks.ModelCheckpoint(
-            save_model_path + timestamp,
-            save_weights_only=True,
-            save_freq=params['batch_size'])
 
     # create nn
     nn_class = importlib.import_module(f'nns.{params["nn_class"]}').NeuralNetwork

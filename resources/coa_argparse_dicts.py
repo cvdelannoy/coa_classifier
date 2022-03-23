@@ -171,7 +171,7 @@ def get_build_db_parser():
         'help': 'Maximum number of examples to store in DB [default: 10000]'
     })
 
-    for arg in (abf_in, db_dir, normalization, target, width,
+    for arg in (abf_in, db_dir, normalization, width,
                 nb_example_reads, max_nb_examples):
         parser.add_argument(arg[0], **arg[1])
     return parser

@@ -10,20 +10,14 @@ filter_width = "{{ filter_width }}"
 
 rule target:
     input:
-        nns=expand('{{ nn_dir }}{target}/nn.h5', target={{ kmer_list }})
+        nns=expand('{{ nn_dir }}nn.h5')
 
-# Use this target rule if you only want to build the dbs and not train the networks
-rule target_dbs:
+rule generate_nn:
     input:
-        expand('{{ db_dir }}train/{target}/db.fs', target={{ kmer_list }}),
-        expand('{{ db_dir }}test/{target}/db.fs', target={{ kmer_list }})
-
-rule generate_nns:
-    input:
-        target_db_train='{{ db_dir }}train/{target}/db.fs',
-        target_db_test='{{ db_dir }}test/{target}/db.fs'
+        db_train='{{ db_dir }}train/db.fs',
+        db_test='{{ db_dir }}test/db.fs'
     output:
-        nn='{{ nn_dir }}{target}/nn.h5'
+        nn='{{ nn_dir }}nn.h5'
     threads:
         1
     resources:
@@ -31,43 +25,40 @@ rule generate_nns:
     shell:
         """
         python {__location__} train_nn \
-            --training-db {input.target_db_train} \
-            --test-db {input.target_db_test} \
+            --training-db {input.db_train} \
+            --test-db {input.db_test} \
             --nn-dir {nn_dir} \
-            --parameter-file {parameter_file} &> {logs_dir}nn_{wildcards.target}.log
+            --parameter-file {parameter_file} &> {logs_dir}nn.log
         """
 
 rule generate_training_db:
     input:
         reads='{{ train_reads }}'
     output:
-        db_fs='{{ db_dir }}train/{target}/db.fs'
+        db_fs='{{ db_dir }}train/db.fs'
     threads:
         1
     shell:
         """
         python {__location__} build_db \
             --abf-in {input.reads} \
-            --db-dir {db_dir}train/{wildcards.target} \
-            --target {wildcards.target} \
+            --db-dir {db_dir}train/ \
             --width {filter_width}  \
-            --nb-example-reads 0 &> {logs_dir}db_train_{wildcards.target}.log
+            --nb-example-reads 0 &> {logs_dir}db_train.log
         """
 
 rule generate_test_db:
     input:
-        reads='{{ train_reads }}'
+        reads='{{ test_reads }}'
     output:
-        db_fs='{{ db_dir }}test/{target}/db.fs'
+        db_fs='{{ db_dir }}test/db.fs'
     threads:
         1
     shell:
         """
-        mkdir -p {db_dir}test/{wildcards.target}
         python {__location__} build_db \
             --abf-in {input.reads} \
-            --db-dir {db_dir}test/{wildcards.target} \
-            --target {wildcards.target} \
+            --db-dir {db_dir}test/ \
             --width {filter_width} \
-            --nb-example-reads 0 &>{logs_dir}db_test_{wildcards.target}.log
+            --nb-example-reads 0 &>{logs_dir}db_test.log
         """

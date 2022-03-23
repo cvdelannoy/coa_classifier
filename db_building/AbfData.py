@@ -24,6 +24,9 @@ class AbfData:
         self.raw = None
         self.baseline_level = np.median(self.raw)
         self.pos_events = self.set_pos_events(baseline_fraction)
+        # coa_type describes if a coa 4,5,6. Currently extracted from filename
+        self.coa_type = self.abf_fn.name[:4].lower()
+
 
     @property
     def raw(self):
@@ -43,6 +46,14 @@ class AbfData:
         self._raw = abf.sweepY[~np.isnan(abf.sweepY)]
         self.unfiltered_raw = self.unfiltered_raw[~np.isnan(abf.sweepY)]
         self.time_vector = abf.sweepX[~np.isnan(abf.sweepY)]
+
+    def get_one_hot(self):
+        """Returns one hot encoding based on COA type"""
+        valid_coas = [4, 5, 6]
+        coa_number = int(self.coa_type[3])
+        one_hot = np.zeros_like(valid_coas)
+        one_hot[valid_coas.index(coa_number)] = 1
+        return one_hot
 
     def set_pos_events(self, fraction):
         """Find all events where current drops below theshold,

@@ -10,10 +10,8 @@ from nns.keras_metrics_from_logits import precision, recall, binary_accuracy
 
 class NeuralNetwork(object):
     """
-    Convolutional Neural network to predict target k-mer presence in squiggle
+    Convolutional Neural network to predict target coa presence in squiggle
 
-    :param target: The target k-mer that the NN should recognise
-    :type target: str
     :param kernel_size: Kernel size of CNN
     :type kernel_size: int
     :param max_sequence_length: Maximum length of read that can be used to
@@ -31,7 +29,6 @@ class NeuralNetwork(object):
     """
 
     def __init__(self, **kwargs):
-        self.target = kwargs['target']
         self.filter_width = kwargs['filter_width']
         self.hfw = (self.filter_width - 1) // 2  # half filter width
         self.kernel_size = kwargs['kernel_size']
@@ -83,9 +80,9 @@ class NeuralNetwork(object):
         # self.model.add(layers.GlobalMaxPool1D())
         self.model.add(layers.Flatten())
         self.model.add(layers.Dropout(self.dropout_remove_prob))
-        self.model.add(layers.Dense(1, activation=None))
+        self.model.add(layers.Dense(3, activation=None))
         self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.learning_rate),
-                           loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
+                           loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
                            metrics=[binary_accuracy, precision, recall])
         # if weights:
         #     self.model.load_weights(weights)
