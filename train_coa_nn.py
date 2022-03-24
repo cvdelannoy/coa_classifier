@@ -57,15 +57,9 @@ def train(parameter_file, training_data, test_data, plots_path=None,
     # Start training
     x_val, y_val = test_db.get_training_set(nb_examples)
 
-    performance_threshold = 0.9
-
     for epoch_index in range(1, params['num_kmer_switches'] + 1):
         x_train, y_train = train_db.get_training_set(nb_examples, oversampling=True)
         nn.train(x_train, y_train, x_val, y_val, eps_per_kmer_switch=params['eps_per_kmer_switch'], quiet=quiet)
-
-        # if nn.history['val_precision'][-1] > performance_threshold and nn.history['val_recall'][-1] > performance_threshold:
-        #     print('Early stopping triggered!')
-        #     break
 
     # Uncomment to print confusion matrix
     # Rows are true labels, columns are predicted labels
