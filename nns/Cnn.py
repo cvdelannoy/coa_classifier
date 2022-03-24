@@ -61,7 +61,8 @@ class NeuralNetwork(object):
         self.model.add(layers.Conv1D(self.filters,
                                      kernel_size=self.kernel_size,
                                      activation='relu',
-                                     input_shape=(self.filter_width, 1)))
+                                     input_shape=(self.filter_width, 1),
+                                     padding='valid'))
         for _ in range(self.num_layers):
             if self.batch_norm:
                 self.model.add(layers.BatchNormalization())
