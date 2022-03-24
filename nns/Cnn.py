@@ -3,10 +3,9 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras import models, layers
 from tensorflow.keras.models import load_model
 
-# from tensorflow.keras.metrics import Accuracy, Precision, Recall
+from tensorflow.keras.metrics import CategoricalAccuracy, Precision, Recall
 import numpy as np
 
-from nns.keras_metrics_from_logits import precision, recall, binary_accuracy
 
 class NeuralNetwork(object):
     """
@@ -55,11 +54,7 @@ class NeuralNetwork(object):
                         If provided, use this to set the model weights
         """
         if weights:
-            self.model = tf.keras.models.load_model(weights, custom_objects={
-                'precision': precision, 'recall': recall,
-                'binary_accuracy': binary_accuracy})
-            print('Successfully loaded weights')
-            return
+            self.model = tf.keras.models.load_model(weights)
 
         # First layer
         self.model = models.Sequential()
@@ -83,7 +78,7 @@ class NeuralNetwork(object):
         self.model.add(layers.Dense(3, activation='softmax'))
         self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.learning_rate),
                            loss=tf.keras.losses.CategoricalCrossentropy(),
-                           metrics=[binary_accuracy, precision, recall])
+                           metrics=[CategoricalAccuracy(), Precision(), Recall()])
         # if weights:
         #     self.model.load_weights(weights)
         #     print('Successfully loaded weights')
@@ -123,12 +118,6 @@ class NeuralNetwork(object):
         self.model.fit(tfd, epochs=self.eps_per_kmer_switch,
                        validation_data=(x_val_pad, y_val),
                        verbose=[2, 0][quiet])
-        for metric in self.model.history.history:
-            # If the metric at the final iteration is NaN, replace it with 1e-10
-            # This makes sure the hyperparameter optimisation does not break
-            if np.isnan(self.model.history.history[metric][-1]):
-                self.model.history.history[metric][-1] = 1e-10
-            self.history[metric].extend(self.model.history.history[metric])
 
     def predict(self, x, return_probs=False):
         """Given sequences input as x, predict if they contain target k-mer.
