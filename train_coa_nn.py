@@ -1,17 +1,15 @@
-import os, sys, re
-
-import yaml
+import os, sys
+from datetime import datetime
 import pickle
 import importlib
+
+import yaml
 import tensorflow as tf
 import numpy as np
-
-from datetime import datetime
+from sklearn.metrics import balanced_accuracy_score
 
 from db_building.CoaExampleDb import ExampleDb
-
 sys.path.append(f'{os.path.dirname(__file__)}/..')
-
 from resources.helper_functions import parse_output_path, parse_input_path
 
 
@@ -74,6 +72,7 @@ def train(parameter_file, training_data, test_data, plots_path=None,
     prediction = nn.predict(x_val)
     true_labels = [int(np.where(i == 1)[0]) for i in y_val]
     print(tf.math.confusion_matrix(true_labels, prediction))
+    print('Balanced accuracy', balanced_accuracy_score(true_labels, prediction))
     return nn
 
 
