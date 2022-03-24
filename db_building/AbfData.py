@@ -113,14 +113,14 @@ class AbfData:
             # Provide a small part of the baseline before and after the event
             start_idx = event[0] - 5
             end_idx = event[-1] + 5
-            event_length = end_idx - start_idx
-            if event_length <= width:
-                if take_one:
-                    return self.unfiltered_raw[start_idx: end_idx]
-                if unfiltered:
-                    pos_list.append(self.unfiltered_raw[start_idx: end_idx])
-                else:
-                    pos_list.append(self.raw[start_idx: end_idx])
+            # event_length = end_idx - start_idx
+            # if event_length <= width:
+            if take_one:
+                return self.unfiltered_raw[start_idx: end_idx]
+            if unfiltered:
+                pos_list.append(self.unfiltered_raw[start_idx: end_idx])
+            else:
+                pos_list.append(self.raw[start_idx: end_idx])
         return pos_list
 
     def get_neg(self, width, nb_neg, unfiltered=False):
