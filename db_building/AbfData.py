@@ -101,7 +101,7 @@ class AbfData:
     def get_pos(self, width, unfiltered=False, take_one=False):
         """Get positive events
 
-        :param width: Width of positive events
+        :param width: Maximum width of positive events
         :param unfiltered: If true, do not apply low-pass filter
         :param take_one: If true, return only one positive
         :return: list with positive events
@@ -110,16 +110,11 @@ class AbfData:
         if take_one:
             random.shuffle(self.pos_events)
         for event in self.pos_events:
-            # Provide a small part of the baseline before the event
+            # Provide a small part of the baseline before and after the event
             start_idx = event[0] - 5
-            end_idx = event[-1]
+            end_idx = event[-1] + 5
             event_length = end_idx - start_idx
-            room_left = width - event_length
-            if room_left > 0:
-                # random_offset = random.randint(0, room_left)
-                # start_idx -= random_offset
-                end_idx += room_left
-                assert (end_idx - start_idx) == width
+            if event_length <= width:
                 if take_one:
                     return self.unfiltered_raw[start_idx: end_idx]
                 if unfiltered:
