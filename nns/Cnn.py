@@ -115,10 +115,15 @@ class NeuralNetwork(object):
               self.batch_size).shuffle(x_pad.shape[0],
                                        reshuffle_each_iteration=True)
 
+        # Early stopping mechanism
+        callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
+                                                    patience=100,
+                                                    restore_best_weights=True)
+
         # Train the model
         self.model.fit(tfd, epochs=self.eps_per_kmer_switch,
                        validation_data=(x_val_pad, y_val),
-                       verbose=[2, 0][quiet])
+                       verbose=[2, 0][quiet], callbacks=[callback])
 
     def predict(self, x, return_probs=False):
         """Given sequences input as x, predict if they contain target k-mer.
