@@ -93,7 +93,7 @@ class AbfData:
 
     def plot_full_signal(self):
         """Plot the complete raw signal"""
-        plt.plot(squiggle_sim.raw)
+        plt.plot(self.raw)
         plt.ylabel('pA')
         plt.xlabel('Seconds')
         plt.show()
