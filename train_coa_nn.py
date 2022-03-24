@@ -4,6 +4,7 @@ import yaml
 import pickle
 import importlib
 import tensorflow as tf
+import numpy as np
 
 from datetime import datetime
 
@@ -52,7 +53,7 @@ def train(parameter_file, training_data, test_data, plots_path=None,
 
     # create nn
     nn_class = importlib.import_module(f'nns.{params["nn_class"]}').NeuralNetwork
-    nn = nn_class(**params, target=train_db.target, weights=model_weights,
+    nn = nn_class(**params, weights=model_weights,
                   cp_callback=cp_callback, tb_callback=tb_callback)
 
     # Start training
@@ -61,7 +62,7 @@ def train(parameter_file, training_data, test_data, plots_path=None,
     performance_threshold = 0.9
 
     for epoch_index in range(1, params['num_kmer_switches'] + 1):
-        x_train, y_train = train_db.get_training_set(nb_examples)
+        x_train, y_train = train_db.get_training_set(nb_examples, oversampling=True)
         nn.train(x_train, y_train, x_val, y_val, eps_per_kmer_switch=params['eps_per_kmer_switch'], quiet=quiet)
 
         if nn.history['val_precision'][-1] > performance_threshold and nn.history['val_recall'][-1] > performance_threshold:
@@ -71,13 +72,13 @@ def train(parameter_file, training_data, test_data, plots_path=None,
     # Uncomment to print confusion matrix
     # Rows are true labels, columns are predicted labels
     prediction = nn.predict(x_val)
-    print(tf.math.confusion_matrix(y_val, prediction))
+    true_labels = [int(np.where(i == 1)[0]) for i in y_val]
+    print(tf.math.confusion_matrix(true_labels, prediction))
     return nn
 
 
 def main(args):
-    target = re.search('(?<=/)[^/]+/$', args.training_db).group(0)[:-1]
-    nn_target_dir = parse_output_path(f'{args.nn_dir}{target}')
+    nn_target_dir = parse_output_path(f'{args.nn_dir}')
     tb_dir = parse_output_path(f'{nn_target_dir}tb_log/{datetime.now().strftime("%Y%m%d-%H%M%S")}')
     tb_callback = tf.keras.callbacks.TensorBoard(log_dir=tb_dir, histogram_freq=1)
     nn = train(args.parameter_file, args.training_db, args.test_db, args.plots_path, args.ckpt_model,

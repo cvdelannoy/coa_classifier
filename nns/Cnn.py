@@ -80,9 +80,9 @@ class NeuralNetwork(object):
         # self.model.add(layers.GlobalMaxPool1D())
         self.model.add(layers.Flatten())
         self.model.add(layers.Dropout(self.dropout_remove_prob))
-        self.model.add(layers.Dense(3, activation=None))
+        self.model.add(layers.Dense(3, activation='softmax'))
         self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.learning_rate),
-                           loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
+                           loss=tf.keras.losses.CategoricalCrossentropy(),
                            metrics=[binary_accuracy, precision, recall])
         # if weights:
         #     self.model.load_weights(weights)
@@ -110,6 +110,10 @@ class NeuralNetwork(object):
                                                  padding='post',
                                                  truncating='post',
                                                  dtype='float32'), -1)
+
+        y = np.vstack(y)
+        y_val = np.vstack(y_val)
+
         # Create tensorflow dataset
         tfd = tf.data.Dataset.from_tensor_slices((x_pad, y)).batch(
               self.batch_size).shuffle(x_pad.shape[0],
@@ -147,13 +151,4 @@ class NeuralNetwork(object):
                                              dtype='float32'), -1)
 
         posteriors = self.model.predict(x_pad)
-        y_hat = posteriors > self.threshold
-        y_out = np.zeros(len(x), dtype=int)
-        for i, yh in enumerate(y_hat):
-            y_out[i] = yh
-        # if return_probs:
-        #     posteriors_out = np.zeros(len(x), dtype=float)
-        #     for i, p in enumerate(posteriors):
-        #         posteriors_out[lb+i*offset: rb + i * offset] = p
-        #     return y_out, posteriors_out
-        return y_out
+        return np.argmax(posteriors, axis=-1)

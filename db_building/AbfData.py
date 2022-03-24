@@ -7,6 +7,17 @@ from pathlib import Path
 import random
 
 
+def coa_to_one_hot(coa_type):
+    """Returns one hot encoding based on COA type.
+    :parameter coa_type: strings such as 'coa4' or 'coa6'
+    """
+    valid_coas = [4, 5, 6]
+    coa_number = int(coa_type[3])
+    one_hot = np.zeros_like(valid_coas)
+    one_hot[valid_coas.index(coa_number)] = 1
+    return one_hot
+
+
 class AbfData:
     """Class for squiggle data extracted from an axon binary file
     :param abf_fn: abf file name
@@ -46,14 +57,6 @@ class AbfData:
         self._raw = abf.sweepY[~np.isnan(abf.sweepY)]
         self.unfiltered_raw = self.unfiltered_raw[~np.isnan(abf.sweepY)]
         self.time_vector = abf.sweepX[~np.isnan(abf.sweepY)]
-
-    def get_one_hot(self):
-        """Returns one hot encoding based on COA type"""
-        valid_coas = [4, 5, 6]
-        coa_number = int(self.coa_type[3])
-        one_hot = np.zeros_like(valid_coas)
-        one_hot[valid_coas.index(coa_number)] = 1
-        return one_hot
 
     def set_pos_events(self, fraction):
         """Find all events where current drops below theshold,
@@ -138,28 +141,3 @@ class AbfData:
                     neg_list.append(self.raw[candidate_indices])
             if len(neg_list) >= nb_neg:
                 return neg_list
-
-
-if __name__ == '__main__':
-    simulated_file = Path('/mnt/c/Users/benno/PycharmProjects/baseless/coa_detection/output_30_30_30.atf')
-    squiggle_sim = AbfData(simulated_file, lowpass_freq=80)
-    plt.plot(squiggle_sim.raw)
-    plt.show()
-
-    # local_file_path = Path(r"/mnt/c/Users/benno/Downloads/zooi/+120mV_cOA6.abf")
-    # squiggle = AbfData(local_file_path, normalization=False, lowpass_freq=80)
-    # a = squiggle.get_pos(2000)
-    # b = squiggle.get_neg(2000)
-    # fig, axs = plt.subplots(2, 1)
-    # axs[0].plot(a)
-    # axs[1].plot(b)
-    # plt.show()
-    # # event_indices = squiggle.get_events(0.65)
-    # # Plot events here for debugging
-    # plt.subplot()
-    # plt.plot(squiggle.time_vector, squiggle.raw)
-    # plt.plot(squiggle.time_vector[event_indices], squiggle.raw[event_indices], '+')
-    # plt.ylabel('pA')
-    # plt.xlabel('Seconds')
-    # plt.show()
-
