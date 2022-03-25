@@ -58,7 +58,7 @@ def train(parameter_file, training_data, test_data, plots_path=None,
     x_val, y_val = test_db.get_training_set(nb_examples)
 
     for epoch_index in range(1, params['num_kmer_switches'] + 1):
-        x_train, y_train = train_db.get_training_set(nb_examples, oversampling=True)
+        x_train, y_train = train_db.get_training_set(nb_examples, oversampling=params['oversampling'])
         nn.train(x_train, y_train, x_val, y_val, eps_per_kmer_switch=params['eps_per_kmer_switch'], quiet=quiet)
 
     # Uncomment to print confusion matrix

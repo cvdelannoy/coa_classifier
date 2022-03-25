@@ -19,6 +19,7 @@ num_batches: 96
 num_kmer_switches: 1
 num_layers: 2
 pool_size: 10
+oversampling: True
 
 # --- COMPILED MODEL PARAMS ---
 threshold: 0
