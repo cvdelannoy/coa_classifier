@@ -3,9 +3,9 @@ import numpy as np
 from os.path import isdir, dirname
 from shutil import rmtree
 from pathlib import Path
+import pandas as pd
 from db_building.AbfData import AbfData
 from db_building.CoaExampleDb import ExampleDb
-
 __location__ = dirname(Path(__file__).resolve())
 sys.path.extend([__location__, f'{__location__}/..'])
 
@@ -28,6 +28,8 @@ def main(args):
         print(f'Processing {file}')
         tr = AbfData(abf_fn=file, normalization=args.normalization,
                      lowpass_freq=80)
+        print(f'Event summaries for {tr.coa_type}')
+        print(pd.Series(tr.get_event_lengths()).describe())
         db.add_training_read(training_read=tr)
         db.pack_db()
         if db.nb_pos > args.max_nb_examples:
