@@ -13,9 +13,6 @@ class NeuralNetwork(object):
 
     :param kernel_size: Kernel size of CNN
     :type kernel_size: int
-    :param max_sequence_length: Maximum length of read that can be used to
-    infer from. If read is longer than this length, don't use it.
-    :type max_sequence_length: int
     :param weights: Path to h5 file that contains model weights, optional
     :param batch_size: Batch size to use during training
     :param threshold: Assign label to TRUE if probability above this threshold
@@ -29,11 +26,8 @@ class NeuralNetwork(object):
 
     def __init__(self, **kwargs):
         self.filter_width = kwargs['filter_width']
-        self.hfw = (self.filter_width - 1) // 2  # half filter width
         self.kernel_size = kwargs['kernel_size']
-        self.max_sequence_length = kwargs['max_sequence_length']
         self.batch_size = kwargs['batch_size']
-        self.threshold = kwargs['threshold']
         self.eps_per_kmer_switch = kwargs['eps_per_kmer_switch']
         self.filters = kwargs['filters']
         self.learning_rate = kwargs['learning_rate']
@@ -42,7 +36,7 @@ class NeuralNetwork(object):
         self.num_layers = kwargs['num_layers']
         self.batch_norm = kwargs['batch_norm']
 
-        self.initialize(kwargs['weights'])
+        self.initialize(kwargs.get('weights'))
         self.history = {'loss': [], 'binary_accuracy': [], 'precision': [],
                         'recall': [], 'val_loss': [], 'val_binary_accuracy': [],
                         'val_precision': [], 'val_recall': []}
@@ -115,15 +109,15 @@ class NeuralNetwork(object):
               self.batch_size).shuffle(x_pad.shape[0],
                                        reshuffle_each_iteration=True)
 
-        # Early stopping mechanism
-        callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
-                                                    patience=100,
-                                                    restore_best_weights=True)
+        # # Early stopping mechanism
+        # callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
+        #                                             patience=100,
+        #                                             restore_best_weights=True)
 
         # Train the model
         self.model.fit(tfd, epochs=self.eps_per_kmer_switch,
                        validation_data=(x_val_pad, y_val),
-                       verbose=[2, 0][quiet], callbacks=[callback])
+                       verbose=[2, 0][quiet]) #, callbacks=[callback])
 
     def predict(self, x, return_probs=False):
         """Given sequences input as x, predict if they contain target k-mer.
