@@ -46,7 +46,7 @@ class ExampleDb(object):
                 self.nb_pos = nb_new_positives
             else:
                 self.nb_pos += nb_new_positives
-        print(f'Added {nb_new_positives} examples for {training_read.coa_type}')
+        # print(f'Added {nb_new_positives} examples for {training_read.coa_type}')
 
         return nb_new_positives
 
