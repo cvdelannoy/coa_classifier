@@ -10,15 +10,12 @@ class ExampleDb(object):
     """
     Database storing training examples for a neural network
     :param db_name: path to database file
-    :param width: width of fragments
     :param read_only (optional):
     """
     def __init__(self, **kwargs):
         self._db = None
         self._db_empty = True
         self.nb_pos = 0
-        if not isfile(kwargs['db_name']):
-            self.width = kwargs['width']
         self.db_name = kwargs['db_name']
 
         self.read_only = kwargs.get('read_only', False)
@@ -38,7 +35,7 @@ class ExampleDb(object):
                 conn.root.examples[label] = []
 
             # --- add positive examples (if any) ---
-            pos_examples = training_read.get_pos(self.width)
+            pos_examples = training_read.get_pos()
             for ex in pos_examples:
                 conn.root.examples[label].append(ex)
             nb_new_positives = len(pos_examples)
@@ -69,12 +66,12 @@ class ExampleDb(object):
             total_coas = len(conn.root.examples.keys())
             # Get which class has least examples.
             # Get how many items are expected per key based on set size
-            items_per_key = size / total_coas
+            items_per_key = int(size / total_coas)
             if oversampling:
-                nr_of_examples = int(items_per_key)
+                nr_of_examples = items_per_key
             else:
                 least_examples_in_class = min([len(v) for v in conn.root.examples.values()])
-                nr_of_examples = int(min(items_per_key, least_examples_in_class))
+                nr_of_examples = min(items_per_key, least_examples_in_class)
 
             for coa, signals in conn.root.examples.items():
                 one_hot = coa_to_one_hot(coa)
@@ -108,12 +105,10 @@ class ExampleDb(object):
         self._db = ZODB.DB(storage)
         if is_existing_db:
             with self._db.transaction() as conn:
-                self.width = conn.root.width
                 # Get total number of entries in database
                 self.nb_pos = sum([len(i) for i in conn.root.examples.values()])
         else:
             with self._db.transaction() as conn:
-                conn.root.width = self.width
                 conn.root.examples = PersistentMapping()
         if self.nb_pos > 0:
             self._db_empty = False

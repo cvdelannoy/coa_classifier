@@ -153,12 +153,6 @@ def get_build_db_parser():
     parser = argparse.ArgumentParser(description='Create ZODB database of training reads from resquiggled fast5s, '
                                                  'for given target k-mer')
 
-    width = ('--width', {
-        'type': int,
-        'required': True,
-        'help': 'Filter width, should match width in the NN param file!'
-    })
-
     nb_example_reads = ('--nb-example-reads', {
         'type': int,
         'default': 100,
@@ -171,7 +165,7 @@ def get_build_db_parser():
         'help': 'Maximum number of examples to store in DB [default: 10000]'
     })
 
-    for arg in (abf_in, db_dir, normalization, width,
+    for arg in (abf_in, db_dir, normalization,
                 nb_example_reads, max_nb_examples):
         parser.add_argument(arg[0], **arg[1])
     return parser
@@ -186,25 +180,6 @@ def get_run_inference_parser():
 
     parser = argparse.ArgumentParser(description='Start up inference for abf files.')
     for arg in (abf_in, out_dir, nn_dir):
-        parser.add_argument(arg[0], **arg[1])
-    return parser
-
-def get_compile_model_parser():
-    parser = argparse.ArgumentParser(description='Compile a multi-network model from single models, for use '
-                                                 'in run_inference.')
-
-    out_model = ('--out-model', {
-        'type': str,
-        'required': True,
-        'help': 'File name produced model'
-    })
-
-    nn_directory = ('--nn-directory', {
-        'type': str,
-        'required': False
-    })
-
-    for arg in (nn_directory, out_model, parameter_file):
         parser.add_argument(arg[0], **arg[1])
     return parser
 

@@ -25,6 +25,9 @@ class AbfData:
     :type normalization: bool
     :param lowpass_freq: Frequency to use for low pass filter in KHz
     :type lowpass_freq: float
+    :param baseline_fraction: Fraction of baseline that current needs to reach
+                              to be labeled as positive event
+    :type baseline_fraction: float
     """
     def __init__(self, abf_fn, normalization=False, lowpass_freq=80,
                  baseline_fraction=0.65):
@@ -98,10 +101,9 @@ class AbfData:
         plt.xlabel('Seconds')
         plt.show()
 
-    def get_pos(self, width, unfiltered=False, take_one=False):
+    def get_pos(self, unfiltered=False, take_one=False):
         """Get positive events
 
-        :param width: Maximum width of positive events
         :param unfiltered: If true, do not apply low-pass filter
         :param take_one: If true, return only one positive
         :return: list with positive events
@@ -113,8 +115,6 @@ class AbfData:
             # Provide a small part of the baseline before and after the event
             start_idx = event[0] - 5
             end_idx = event[-1] + 5
-            # event_length = end_idx - start_idx
-            # if event_length <= width:
             if take_one:
                 return self.unfiltered_raw[start_idx: end_idx]
             if unfiltered:

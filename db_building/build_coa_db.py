@@ -1,6 +1,6 @@
 import sys, re
 import numpy as np
-from os.path import isdir, dirname, basename, splitext
+from os.path import isdir, dirname
 from shutil import rmtree
 from pathlib import Path
 from db_building.AbfData import AbfData
@@ -21,12 +21,11 @@ def main(args):
     file_list = parse_input_path(args.abf_in, pattern='*.abf')
     db_name = out_path+'db.fs'
 
-    db = ExampleDb(db_name=db_name, width=args.width)
+    db = ExampleDb(db_name=db_name)
 
     # --- process abf files ---
     for i, file in enumerate(file_list):
         print(f'Processing {file}')
-        # todo: counts on specific naming of files!
         tr = AbfData(abf_fn=file, normalization=args.normalization,
                      lowpass_freq=80)
         db.add_training_read(training_read=tr)

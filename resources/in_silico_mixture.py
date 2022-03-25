@@ -85,8 +85,7 @@ class InSilicoGenerator:
                 positive_example = False
                 fragment_width = self.squiggle_length - current_index
             if positive_example:
-                squiggle_fragment = coa_object.get_pos(fragment_width,
-                                                       unfiltered=unfiltered,
+                squiggle_fragment = coa_object.get_pos(unfiltered=unfiltered,
                                                        take_one=True)
                 count_dict[fragment_id][0] += 1
             else:

@@ -44,7 +44,7 @@ class CoaInference:
         :rtype: Counter
         """
         abf = AbfData(abf_path)
-        events = abf.get_pos(self.input_width)
+        events = abf.get_pos()
         x_pad = np.expand_dims(events, -1)
 
         # ndarray, first axis is event no, second axis per-coa confidence score

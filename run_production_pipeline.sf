@@ -43,7 +43,6 @@ rule generate_training_db:
         python {__location__} build_db \
             --abf-in {input.reads} \
             --db-dir {db_dir}train/ \
-            --width {filter_width}  \
             --nb-example-reads 0 &> {logs_dir}db_train.log
         """
 
@@ -59,6 +58,5 @@ rule generate_test_db:
         python {__location__} build_db \
             --abf-in {input.reads} \
             --db-dir {db_dir}test/ \
-            --width {filter_width} \
             --nb-example-reads 0 &>{logs_dir}db_test.log
         """
