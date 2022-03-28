@@ -7,10 +7,11 @@
 # CNN ARCHITECTURE
 nn_class: Cnn
 batch_norm: 1
-batch_size: 16
+batch_size: 32
 dropout_keep_prob: 0.85
-eps_per_kmer_switch: 500
-filter_width: 500
+eps_per_kmer_switch: 200
+# If filter_width is set to False, the CNN takes variable-lenth input
+filter_width: False
 filters: 10
 kernel_size: 25
 learning_rate: 0.0001

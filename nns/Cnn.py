@@ -25,6 +25,7 @@ class NeuralNetwork(object):
     """
 
     def __init__(self, **kwargs):
+        # Filter_width can be set to false, which creates variable input length
         self.filter_width = kwargs['filter_width']
         self.kernel_size = kwargs['kernel_size']
         self.batch_size = kwargs['batch_size']
@@ -52,10 +53,11 @@ class NeuralNetwork(object):
 
         # First layer
         self.model = models.Sequential()
+        input_shape = (self.filter_width, 1) if self.filter_width else (None, 1)
         self.model.add(layers.Conv1D(self.filters,
                                      kernel_size=self.kernel_size,
                                      activation='relu',
-                                     input_shape=(self.filter_width, 1),
+                                     input_shape=input_shape,
                                      padding='valid'))
         for _ in range(self.num_layers):
             if self.batch_norm:
@@ -65,11 +67,11 @@ class NeuralNetwork(object):
             self.model.add(layers.Conv1D(self.filters,
                                          kernel_size=self.kernel_size,
                                          activation='relu'))
-        if self.pool_size:
-            self.model.add(layers.MaxPool1D(self.pool_size))
-        # self.model.add(layers.GlobalMaxPool1D())
-        self.model.add(layers.Flatten())
-        self.model.add(layers.Dropout(self.dropout_remove_prob))
+        # if self.pool_size:
+        #     self.model.add(layers.MaxPool1D(self.pool_size))
+        self.model.add(layers.GlobalAvgPool1D())
+        # self.model.add(layers.Flatten())
+        # self.model.add(layers.Dropout(self.dropout_remove_prob))
         self.model.add(layers.Dense(3, activation='softmax'))
         self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.learning_rate),
                            loss=tf.keras.losses.CategoricalCrossentropy(),
@@ -92,11 +94,14 @@ class NeuralNetwork(object):
         :param quiet: If set to true, does not print to console
         """
         # Pad input sequences
-        x_pad = np.expand_dims(pad_sequences(x, maxlen=self.filter_width,
+
+        maxlen = self.filter_width if self.filter_width else None
+
+        x_pad = np.expand_dims(pad_sequences(x, maxlen=maxlen,
                                              padding='post', truncating='post',
                                              dtype='float32'), -1)
         x_val_pad = np.expand_dims(pad_sequences(x_val,
-                                                 maxlen=self.filter_width,
+                                                 maxlen=maxlen,
                                                  padding='post',
                                                  truncating='post',
                                                  dtype='float32'), -1)
@@ -115,7 +120,7 @@ class NeuralNetwork(object):
                                                     restore_best_weights=True)
 
         # Train the model
-        self.model.fit(tfd, epochs=self.eps_per_kmer_switch,
+        self.model.fit(tfd, epochs=eps_per_kmer_switch,
                        validation_data=(x_val_pad, y_val),
                        verbose=[2, 0][quiet], callbacks=[callback])
 
