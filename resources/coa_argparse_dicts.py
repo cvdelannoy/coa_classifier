@@ -150,14 +150,8 @@ def get_training_parser():
 
 
 def get_build_db_parser():
-    parser = argparse.ArgumentParser(description='Create ZODB database of training reads from resquiggled fast5s, '
-                                                 'for given target k-mer')
+    parser = argparse.ArgumentParser(description='Create ZODB database for target cOAs from ABF files')
 
-    nb_example_reads = ('--nb-example-reads', {
-        'type': int,
-        'default': 100,
-        'help': 'Number of full example reads to store [default: 100]'
-    })
 
     max_nb_examples = ('--max-nb-examples', {
         'type': int,
@@ -165,8 +159,7 @@ def get_build_db_parser():
         'help': 'Maximum number of examples to store in DB [default: 10000]'
     })
 
-    for arg in (abf_in, db_dir, normalization,
-                nb_example_reads, max_nb_examples):
+    for arg in (abf_in, db_dir, normalization, max_nb_examples):
         parser.add_argument(arg[0], **arg[1])
     return parser
 
