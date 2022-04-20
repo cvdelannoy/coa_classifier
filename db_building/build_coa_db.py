@@ -28,8 +28,8 @@ def main(args):
         print(f'Processing {file}')
         tr = AbfData(abf_fn=file, normalization=args.normalization,
                      lowpass_freq=80)
-        print(f'Event summaries for {tr.coa_type}')
-        print(pd.Series(tr.get_event_lengths()).describe())
+        # print(f'Event summaries for {tr.coa_type}')
+        # print(pd.Series(tr.get_event_lengths()).describe())
         db.add_training_read(training_read=tr)
         db.pack_db()
         if db.nb_pos > args.max_nb_examples:
