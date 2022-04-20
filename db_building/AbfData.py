@@ -11,7 +11,7 @@ def coa_to_one_hot(coa_type):
     """Returns one hot encoding based on COA type.
     :parameter coa_type: strings such as 'coa4' or 'coa6'
     """
-    valid_coas = [4, 5, 6]
+    valid_coas = [3, 4, 5, 6]
     coa_number = int(coa_type[3])
     one_hot = np.zeros_like(valid_coas)
     one_hot[valid_coas.index(coa_number)] = 1

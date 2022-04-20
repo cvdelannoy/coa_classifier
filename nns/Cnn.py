@@ -72,7 +72,7 @@ class NeuralNetwork(object):
         self.model.add(layers.GlobalAvgPool1D())
         # self.model.add(layers.Flatten())
         # self.model.add(layers.Dropout(self.dropout_remove_prob))
-        self.model.add(layers.Dense(3, activation='softmax'))
+        self.model.add(layers.Dense(4, activation='softmax'))
         self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.learning_rate),
                            loss=tf.keras.losses.CategoricalCrossentropy(),
                            metrics=[CategoricalAccuracy(), Precision(), Recall()])
