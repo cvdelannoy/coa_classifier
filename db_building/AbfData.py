@@ -38,7 +38,7 @@ class AbfData:
         self.raw = None
         self.baseline_level = np.median(self.raw)
         self.pos_events = self.set_pos_events(baseline_fraction)
-        # coa_type describes if a coa 4,5,6. Currently extracted from filename
+        # coa_type describes if a coa 3,4,5,6. Currently extracted from filename
         self.coa_type = self.abf_fn.name[:4].lower()
 
 
@@ -73,10 +73,10 @@ class AbfData:
         # Ugly boiii
         self.flat_pos_indices = event_ids
         step_list = np.diff(event_ids)
-        cut_points = np.where(step_list>1)[0]
+        cut_points = np.where(step_list > 1)[0]
         cut_points = cut_points + 1
         events = np.split(event_ids, cut_points)
-        return [event for event in events if len(event) > 2]
+        return [event for event in events if len(event) > 2 and len(event) < 5e4]
 
     def get_event_lengths(self):
         """Get duration of events"""
@@ -85,8 +85,29 @@ class AbfData:
             start_idx = event[0]
             end_idx = event[-1]
             event_length = end_idx - start_idx
+            # Convert to seconds
+            event_length *= 2e-6
             event_lengths.append(event_length)
+
         return event_lengths
+
+    def get_event_relative_blockades(self):
+        rel_blockades = []
+        for event_ix in self.pos_events:
+            start_ix = event_ix[0]
+            end_ix = event_ix[-1]
+            event = self.raw[start_ix:end_ix]
+            block_amplitude = self.baseline_level - np.mean(event)
+            relative_block = block_amplitude / self.baseline_level
+            rel_blockades.append(relative_block)
+        return rel_blockades
+
+    def get_fingerprints(self):
+        """Return event length and relative blockade of all events"""
+        event_lengths = self.get_event_lengths()
+        rel_blockades = self.get_event_relative_blockades()
+        assert len(event_lengths) == len(rel_blockades)
+        return event_lengths, rel_blockades
 
     def plot_hist_pos(self):
         """Plot a histogram of event duration lengths"""
@@ -113,8 +134,8 @@ class AbfData:
             random.shuffle(self.pos_events)
         for event in self.pos_events:
             # Provide a small part of the baseline before and after the event
-            start_idx = event[0] - 5
-            end_idx = event[-1] + 5
+            start_idx = event[0] - 15
+            end_idx = event[-1] + 15
             if take_one:
                 return self.unfiltered_raw[start_idx: end_idx]
             if unfiltered:
