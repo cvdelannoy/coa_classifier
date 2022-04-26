@@ -76,7 +76,7 @@ class AbfData:
         cut_points = np.where(step_list > 1)[0]
         cut_points = cut_points + 1
         events = np.split(event_ids, cut_points)
-        return [event for event in events if len(event) > 2 and len(event) < 5e4]
+        return [event for event in events if len(event) > 13 and len(event) < 5e4]
 
     def get_event_lengths(self):
         """Get duration of events"""
@@ -97,8 +97,9 @@ class AbfData:
             start_ix = event_ix[0]
             end_ix = event_ix[-1]
             event = self.raw[start_ix:end_ix]
-            block_amplitude = self.baseline_level - np.mean(event)
-            relative_block = block_amplitude / self.baseline_level
+            block_amplitude = self.baseline_level - event[len(event) // 2]
+            # block_amplitude = self.baseline_level - np.median(event)
+            relative_block = min(1, block_amplitude / self.baseline_level)
             rel_blockades.append(relative_block)
         return rel_blockades
 
