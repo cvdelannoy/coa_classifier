@@ -67,11 +67,11 @@ class NeuralNetwork(object):
             self.model.add(layers.Conv1D(self.filters,
                                          kernel_size=self.kernel_size,
                                          activation='relu'))
-        # if self.pool_size:
-        #     self.model.add(layers.MaxPool1D(self.pool_size))
-        self.model.add(layers.GlobalAvgPool1D())
-        # self.model.add(layers.Flatten())
-        # self.model.add(layers.Dropout(self.dropout_remove_prob))
+        if self.pool_size:
+            self.model.add(layers.MaxPool1D(self.pool_size))
+        # self.model.add(layers.GlobalAvgPool1D())
+        self.model.add(layers.Flatten())
+        self.model.add(layers.Dropout(self.dropout_remove_prob))
         self.model.add(layers.Dense(4, activation='softmax'))
         self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.learning_rate),
                            loss=tf.keras.losses.CategoricalCrossentropy(),
@@ -145,4 +145,7 @@ class NeuralNetwork(object):
                                              dtype='float32'), -1)
 
         posteriors = self.model.predict(x_pad)
+        if return_probs:
+            return posteriors
+
         return np.argmax(posteriors, axis=-1)
