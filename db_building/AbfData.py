@@ -41,7 +41,6 @@ class AbfData:
         # coa_type describes if a coa 3,4,5,6. Currently extracted from filename
         self.coa_type = self.abf_fn.name[:4].lower()
 
-
     @property
     def raw(self):
         return self._raw
@@ -53,7 +52,7 @@ class AbfData:
             abf = pyabf.ATF(self.abf_fn)
         else:
             abf = pyabf.ABF(self.abf_fn)
-        self.unfiltered_raw = abf.sweepY
+        self.unfiltered_raw = abf.sweepY.copy()
         pyabf.filter.gaussian(abf, self.smoothing_sigma)
         abf.setSweep(0)
         # Drop NaNs because they show up at the edges due to smoothing
