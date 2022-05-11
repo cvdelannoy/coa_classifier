@@ -35,8 +35,8 @@ def load_db(db_dir, read_only=False):
     return db
 
 
-def train(parameter_file, training_data, test_data, plots_path=None,
-          save_model=None, model_weights=None, quiet=False, tb_callback=None):
+def train(parameter_file, training_data, test_data, model_weights=None,
+          quiet=False, tb_callback=None):
     tf.config.threading.set_intra_op_parallelism_threads(1)
     tf.config.threading.set_inter_op_parallelism_threads(1)
     timestamp = datetime.now().strftime('%y-%m-%d_%H:%M:%S')
@@ -81,7 +81,7 @@ def main(args):
     nn_target_dir = parse_output_path(f'{args.nn_dir}')
     tb_dir = parse_output_path(f'{nn_target_dir}tb_log/{datetime.now().strftime("%Y%m%d-%H%M%S")}')
     tb_callback = tf.keras.callbacks.TensorBoard(log_dir=tb_dir, histogram_freq=1)
-    nn = train(args.parameter_file, args.training_db, args.test_db, args.plots_path, args.ckpt_model,
+    nn = train(args.parameter_file, args.training_db, args.test_db,
                args.model_weights, False, tb_callback)
     nn.model.save(f'{nn_target_dir}nn.h5')
     with open(f'{nn_target_dir}performance.pkl', 'wb') as fh: pickle.dump(nn.history, fh)
