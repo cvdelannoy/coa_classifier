@@ -1,5 +1,6 @@
 import argparse
-import os, sys
+import os
+import sys
 from pathlib import Path
 
 sys.path.append(f'{os.path.dirname(__file__)}/..')

@@ -2,13 +2,11 @@
 import argparse
 import sys
 
-from resources import coa_argparse_dicts as argparse_dicts
-
-from db_building import build_coa_db
-import train_coa_nn
 import run_inference
-
 import run_production_pipeline
+import train_coa_nn
+from db_building import build_coa_db
+from resources import coa_argparse_dicts as argparse_dicts
 
 
 def main(args=None):

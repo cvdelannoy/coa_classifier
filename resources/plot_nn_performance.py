@@ -1,10 +1,11 @@
-import argparse, sys, os
-import re
+import argparse
+import os
 import pickle
+import sys
 from pathlib import Path
 
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))

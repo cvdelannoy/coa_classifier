@@ -1,17 +1,24 @@
-import os, sys
-from datetime import datetime
-import pickle
 import importlib
+import os
+import pickle
+import sys
+from datetime import datetime
 
-import yaml
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
+import yaml
 from sklearn.metrics import balanced_accuracy_score
 
 from db_building.CoaExampleDb import ExampleDb
-sys.path.append(f'{os.path.dirname(__file__)}/..')
-from resources.helper_functions import parse_output_path, parse_input_path
 
+sys.path.append(f'{os.path.dirname(__file__)}/..')
+from resources.helper_functions import parse_output_path
+
+gpus = tf.config.experimental.list_physical_devices('GPU')
+tf.config.set_visible_devices(gpus[1:], 'GPU')
+if gpus:
+    for gpu in gpus:
+        tf.config.experimental.set_memory_growth(gpu, True)
 
 def load_db(db_dir, read_only=False):
     """Load database from given directory

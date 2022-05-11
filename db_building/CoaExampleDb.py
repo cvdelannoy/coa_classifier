@@ -1,8 +1,10 @@
-import ZODB, ZODB.FileStorage
-from persistent.mapping import PersistentMapping
-from os.path import isfile
-import numpy as np
 import random
+from os.path import isfile
+
+import ZODB
+import ZODB.FileStorage
+from persistent.mapping import PersistentMapping
+
 from db_building.AbfData import AbfData, coa_to_one_hot
 
 

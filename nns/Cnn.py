@@ -1,10 +1,8 @@
-import tensorflow as tf
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras import models, layers
-from tensorflow.keras.models import load_model
-
-from tensorflow.keras.metrics import CategoricalAccuracy, Precision, Recall
 import numpy as np
+import tensorflow as tf
+from tensorflow.keras import models, layers
+from tensorflow.keras.metrics import CategoricalAccuracy, Precision, Recall
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 
 class NeuralNetwork(object):

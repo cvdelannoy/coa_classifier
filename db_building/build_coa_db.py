@@ -1,11 +1,11 @@
-import sys, re
-import numpy as np
+import sys
 from os.path import isdir, dirname
-from shutil import rmtree
 from pathlib import Path
-import pandas as pd
+from shutil import rmtree
+
 from db_building.AbfData import AbfData
 from db_building.CoaExampleDb import ExampleDb
+
 __location__ = dirname(Path(__file__).resolve())
 sys.path.extend([__location__, f'{__location__}/..'])
 

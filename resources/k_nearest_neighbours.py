@@ -1,7 +1,9 @@
 from pathlib import Path
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import confusion_matrix, balanced_accuracy_score
+
 from sklearn import preprocessing
+from sklearn.metrics import confusion_matrix, balanced_accuracy_score
+from sklearn.neighbors import KNeighborsClassifier
+
 from plot_coa_event_fingerprints import extract_fingerprints_from_files
 
 

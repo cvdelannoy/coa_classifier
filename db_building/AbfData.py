@@ -1,10 +1,10 @@
+import random
 from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
 import pyabf
 import pyabf.filter
-import numpy as np
-import matplotlib.pyplot as plt
-from pathlib import Path
-import random
 
 
 def coa_to_one_hot(coa_type):

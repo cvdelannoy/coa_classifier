@@ -1,11 +1,10 @@
 import os
-import yaml
 
-from snakemake import snakemake
+import yaml
 from jinja2 import Template
+from snakemake import snakemake
 
 from resources.helper_functions import parse_output_path
-
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 

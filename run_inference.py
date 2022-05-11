@@ -1,10 +1,12 @@
-from pathlib import Path
-import tensorflow as tf
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-import numpy as np
-from db_building.AbfData import AbfData
 from collections import Counter
+from pathlib import Path
+
+import numpy as np
+import tensorflow as tf
 from sklearn.metrics import confusion_matrix, balanced_accuracy_score
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+
+from db_building.AbfData import AbfData
 
 # Map target coa to correct index
 TARGET_TO_INDEX = {'cOA3': 0,
