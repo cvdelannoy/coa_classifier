@@ -21,11 +21,13 @@ class ExampleDb(object):
         self.read_only = kwargs.get('read_only', False)
         self.db = self.db_name
 
-    def add_training_read(self, training_read):
+    def add_training_read(self, training_read, unfiltered):
         """Add training read with cOA events
 
         :param training_read: Object containing a training read
         :type training_read: AbfData
+        :param unfiltered: If true, return squiggle that has not been passed
+                           through low-pass filter
         :return: Number of added events
         """
         label = training_read.coa_type
@@ -35,7 +37,7 @@ class ExampleDb(object):
                 conn.root.examples[label] = []
 
             # --- add positive examples (if any) ---
-            pos_examples = training_read.get_pos()
+            pos_examples = training_read.get_pos(unfiltered=unfiltered)
             for ex in pos_examples:
                 conn.root.examples[label].append(ex)
             nb_new_positives = len(pos_examples)
@@ -101,7 +103,9 @@ class ExampleDb(object):
         :param db_name: name of new db, including path
         """
         is_existing_db = isfile(db_name)
-        storage = ZODB.FileStorage.FileStorage(db_name, read_only=self.read_only)
+        storage = ZODB.FileStorage.FileStorage(db_name,
+                                               read_only=self.read_only,
+                                               pack_keep_old=False)
         self._db = ZODB.DB(storage)
         if is_existing_db:
             with self._db.transaction() as conn:
