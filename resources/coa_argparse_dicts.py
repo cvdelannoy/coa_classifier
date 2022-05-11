@@ -165,10 +165,10 @@ def get_build_db_parser():
 
 
 def get_run_inference_parser():
-    nn_dir = ('--nn-dir', {
+    nn_dir = ('--nn-path', {
         'type': Path,
         'required': True,
-        'help': 'Directory where produced networks are stored.'
+        'help': 'Path to trained network saved as .h5 file'
     })
 
     parser = argparse.ArgumentParser(description='Start up inference for abf files.')
