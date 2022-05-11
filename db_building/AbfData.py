@@ -88,7 +88,6 @@ class AbfData:
             # Convert to seconds
             event_length *= 2e-6
             event_lengths.append(event_length)
-
         return event_lengths
 
     def get_event_relative_blockades(self):
@@ -97,8 +96,8 @@ class AbfData:
             start_ix = event_ix[0]
             end_ix = event_ix[-1]
             event = self.unfiltered_raw[start_ix:end_ix]
-            block_amplitude = self.baseline_level - event[len(event) // 2]
-            # block_amplitude = self.baseline_level - np.median(event)
+            # block_amplitude = self.baseline_level - event[len(event) // 2]
+            block_amplitude = self.baseline_level - np.median(event)
             relative_block = min(1, block_amplitude / self.baseline_level)
             rel_blockades.append(relative_block)
         return rel_blockades
