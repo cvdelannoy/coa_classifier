@@ -76,7 +76,7 @@ class ExampleDb(object):
             else:
                 least_examples_in_class = min([len(v) for v in conn.root.examples.values()])
                 nr_of_examples = min(items_per_key, least_examples_in_class)
-
+            print(f'Using {nr_of_examples} examples per class')
             for coa, signals in conn.root.examples.items():
                 one_hot = coa_to_one_hot(coa)
                 training_set_x.extend(random.choices(signals, k=nr_of_examples))

@@ -1,8 +1,6 @@
 import importlib
 import os
-import pickle
 import sys
-from datetime import datetime
 
 import numpy as np
 import tensorflow as tf
@@ -20,6 +18,7 @@ if gpus:
     for gpu in gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
 
+
 def load_db(db_dir, read_only=False):
     """Load database from given directory
 
@@ -36,10 +35,7 @@ def load_db(db_dir, read_only=False):
 
 
 def train(parameter_file, training_data, test_data, model_weights=None,
-          quiet=False, tb_callback=None):
-    tf.config.threading.set_intra_op_parallelism_threads(1)
-    tf.config.threading.set_inter_op_parallelism_threads(1)
-    timestamp = datetime.now().strftime('%y-%m-%d_%H:%M:%S')
+          quiet=False):
     # Load parameter file
     if type(parameter_file) == str:
         with open(parameter_file, 'r') as pf: params = yaml.load(pf, Loader=yaml.FullLoader)
@@ -51,7 +47,6 @@ def train(parameter_file, training_data, test_data, model_weights=None,
     # Load train & test data
     test_db = load_db(test_data, read_only=True)
     train_db = load_db(training_data, read_only=True)
-    nb_examples = params['batch_size'] * params['num_batches']
 
     # Create save-file for model if required
     cp_callback = None
@@ -59,14 +54,13 @@ def train(parameter_file, training_data, test_data, model_weights=None,
     # create nn
     nn_class = importlib.import_module(f'nns.{params["nn_class"]}').NeuralNetwork
     nn = nn_class(**params, weights=model_weights,
-                  cp_callback=cp_callback, tb_callback=tb_callback)
+                  cp_callback=cp_callback)
 
     # Start training
-    x_val, y_val = test_db.get_training_set(nb_examples)
+    x_val, y_val = test_db.get_training_set()
 
-    x_train, y_train = train_db.get_training_set(nb_examples, oversampling=params['oversampling'])
-    nn.train(x_train, y_train, x_val, y_val,
-             eps_per_kmer_switch=params['eps_per_kmer_switch'], quiet=quiet)
+    x_train, y_train = train_db.get_training_set(oversampling=params['oversampling'])
+    nn.train(x_train, y_train, x_val, y_val, quiet=quiet, epochs=params['epochs'])
 
     # Uncomment to print confusion matrix
     # Rows are true labels, columns are predicted labels
@@ -79,9 +73,6 @@ def train(parameter_file, training_data, test_data, model_weights=None,
 
 def main(args):
     nn_target_dir = parse_output_path(f'{args.nn_dir}')
-    tb_dir = parse_output_path(f'{nn_target_dir}tb_log/{datetime.now().strftime("%Y%m%d-%H%M%S")}')
-    tb_callback = tf.keras.callbacks.TensorBoard(log_dir=tb_dir, histogram_freq=1)
     nn = train(args.parameter_file, args.training_db, args.test_db,
-               args.model_weights, False, tb_callback)
+               args.model_weights, False)
     nn.model.save(f'{nn_target_dir}nn.h5')
-    with open(f'{nn_target_dir}performance.pkl', 'wb') as fh: pickle.dump(nn.history, fh)

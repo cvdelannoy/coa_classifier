@@ -54,6 +54,7 @@ class AbfData:
             abf = pyabf.ABF(self.abf_fn)
         self.unfiltered_raw = abf.sweepY.copy()
         pyabf.filter.gaussian(abf, self.smoothing_sigma)
+        # pyabf.filter.gaussian(abf, 0.001)
         abf.setSweep(0)
         # Drop NaNs because they show up at the edges due to smoothing
         self._raw = abf.sweepY[~np.isnan(abf.sweepY)]
@@ -64,7 +65,7 @@ class AbfData:
         """Find all events where current drops below theshold,
         and set them as positive events. Output is saved in self.pos_events.
 
-        :param fraction: Fraction of boseline to use as cutoff for positive event
+        :param fraction: Fraction of baseline to use as cutoff for positive event
         :return: List of all indices in raw signal that contain positive events.
         """
         cutoff = fraction * self.baseline_level
@@ -76,7 +77,7 @@ class AbfData:
         cut_points = cut_points + 1
         events = np.split(event_ids, cut_points)
         # Keep events only of certain length
-        return [event for event in events if len(event) > 13 and len(event) < 5e4]
+        return [event for event in events if 13 < len(event) < 5e4]
 
     def get_event_lengths(self):
         """Get duration of events"""
@@ -85,8 +86,8 @@ class AbfData:
             start_idx = event[0]
             end_idx = event[-1]
             event_length = end_idx - start_idx
-            # Convert to seconds
-            event_length *= 2e-6
+            # # Convert to seconds
+            # event_length *= 2e-6
             event_lengths.append(event_length)
         return event_lengths
 

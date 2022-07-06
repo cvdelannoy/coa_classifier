@@ -9,17 +9,12 @@ nn_class: Cnn
 batch_norm: 1
 batch_size: 16
 dropout_keep_prob: 0.8
-eps_per_kmer_switch: 100
+epochs: 50
 filter_width: 50000
 filters: 10
 kernel_size: 25
 learning_rate: 0.001
-max_sequence_length: 15000
-num_batches: 300
-num_kmer_switches: 1
 num_layers: 2
 pool_size: 10
-oversampling: False
+oversampling: True
 
-# --- COMPILED MODEL PARAMS ---
-threshold: 0

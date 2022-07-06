@@ -15,18 +15,18 @@ def extract_fingerprints_from_files(files):
     """
     event_dict = {}
     for file in files:
-        if file.name[:4].lower() in event_dict:
-            print('Skipping')
-            continue
+        # if file.name[:4].lower() in event_dict:
+        #     print('Skipping')
+        #     continue
         print(f'Processing {file}')
-        abf = AbfData(file, lowpass_freq=80)
+        abf = AbfData(file, lowpass_freq=80, baseline_fraction=0.65)
         if abf.coa_type not in event_dict:
             event_dict[abf.coa_type] = [[], []]
-            event_lengths, rel_blockades = abf.get_fingerprints()
-            event_dict[abf.coa_type][0].extend(event_lengths)
-            event_dict[abf.coa_type][1].extend(rel_blockades)
-        if len(event_dict) == 4:
-            break
+        event_lengths, rel_blockades = abf.get_fingerprints()
+        event_dict[abf.coa_type][0].extend(event_lengths)
+        event_dict[abf.coa_type][1].extend(rel_blockades)
+        # if len(event_dict) == 4:
+        #     break
     return event_dict
 
 def plot_scatter_fingerprints(event_dict):
@@ -49,8 +49,8 @@ def plot_scatter_fingerprints(event_dict):
     ax.set_ylabel('Relative blockade')
     # fig.legend()
     plt.tight_layout()
-    plt.savefig('/home/noord087/lustre_link/capita_selecta/outputs/figures/sanity_check/fingerprints_amplitude_from_middle_lpf_100.png', dpi=300)
-    # plt.show()
+    # plt.savefig('/home/noord087/lustre_link/capita_selecta/outputs/figures/sanity_check/fingerprints_amplitude_from_middle_lpf_100.png', dpi=300)
+    plt.show()
 
 
 def main():

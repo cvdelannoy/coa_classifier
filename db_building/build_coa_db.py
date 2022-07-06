@@ -3,6 +3,8 @@ from os.path import isdir, dirname
 from pathlib import Path
 from shutil import rmtree
 
+import pandas as pd
+
 from db_building.AbfData import AbfData
 from db_building.CoaExampleDb import ExampleDb
 
@@ -22,14 +24,15 @@ def main(args):
     db_name = out_path+'db.fs'
 
     db = ExampleDb(db_name=db_name)
-    unfiltered = True
+    # By default, only use unfiltered segments
+    unfiltered = False
     # --- process abf files ---
     for i, file in enumerate(file_list):
         print(f'Processing {file}')
         tr = AbfData(abf_fn=file, normalization=args.normalization,
                      lowpass_freq=80, baseline_fraction=0.65)
-        # print(f'Event summaries for {tr.coa_type}')
-        # print(pd.Series(tr.get_event_lengths()).describe())
+        print(f'Event summaries for {tr.coa_type}')
+        print(pd.Series(tr.get_event_lengths()).describe())
 
         db.add_training_read(training_read=tr, unfiltered=unfiltered)
         db.pack_db()

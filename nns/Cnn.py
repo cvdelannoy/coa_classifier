@@ -27,14 +27,12 @@ class NeuralNetwork(object):
         self.filter_width = kwargs['filter_width']
         self.kernel_size = kwargs['kernel_size']
         self.batch_size = kwargs['batch_size']
-        self.eps_per_kmer_switch = kwargs['eps_per_kmer_switch']
         self.filters = kwargs['filters']
         self.learning_rate = kwargs['learning_rate']
         self.pool_size = kwargs['pool_size']
         self.dropout_remove_prob = 1 - kwargs['dropout_keep_prob']
         self.num_layers = kwargs['num_layers']
         self.batch_norm = kwargs['batch_norm']
-
         self.initialize(kwargs.get('weights'))
         self.history = {'loss': [], 'binary_accuracy': [], 'precision': [],
                         'recall': [], 'val_loss': [], 'val_binary_accuracy': [],
@@ -81,7 +79,7 @@ class NeuralNetwork(object):
         # Uncomment to print model summary
         self.model.summary()
 
-    def train(self, x, y, x_val, y_val, quiet=False, eps_per_kmer_switch=100):
+    def train(self, x, y, x_val, y_val, quiet=False, epochs=100):
         """Train the network. x_val/y_val may be used for validation/early
         stopping mechanisms.
 
@@ -114,11 +112,10 @@ class NeuralNetwork(object):
 
         # Early stopping mechanism
         callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
-                                                    patience=100,
-                                                    restore_best_weights=True)
+                                                    patience=20)
 
         # Train the model
-        self.model.fit(tfd, epochs=eps_per_kmer_switch,
+        self.model.fit(tfd, epochs=epochs,
                        validation_data=(x_val_pad, y_val),
                        verbose=[2, 0][quiet], callbacks=[callback])
 
