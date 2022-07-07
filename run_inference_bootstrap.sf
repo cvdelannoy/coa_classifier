@@ -1,0 +1,27 @@
+
+__location__ = '{{ __location__ }}'
+bs_dir = '{{ bs_dir }}'
+log_dir = '{{ log_dir }}'
+nn_path = '{{ nn_path }}'
+abf_in = '{{ abf_in }}'
+
+bs_iters = int('{{ bootstrap_iters }}')
+
+rule target:
+    input:
+        conf_mat = expand('{{ bs_dir }}bs_{ix}/confmat.csv', ix=range(bs_iters))
+
+
+rule run_inference:
+    output:
+        conf_mat='{{ bs_dir }}bs_{ix}/confmat.csv'
+    threads: 1
+    shell:
+        '''
+        python {{ __location__ }} run_inference \
+            --abf-in {{ abf_in }} \
+            --nn-path {{ nn_path }} \
+            --out-dir {{ bs_dir }}bs_{wildcards.ix} \
+            --bootstrap \
+            --no-gpu  &> {{ log_dir }}run_inference_{wildcards.ix}.log
+        '''

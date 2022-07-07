@@ -12,6 +12,7 @@ dependencies:
   - certifi
   - openssl
   - jinja2=3.0
+  - seaborn=0.11.2
   - scikit-learn==1.0
   - joblib
   - snakemake==5.26.1
