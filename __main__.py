@@ -3,6 +3,7 @@ import argparse
 import sys
 
 import run_inference
+import run_inference_bootstrap
 import run_production_pipeline
 import train_coa_nn
 from db_building import build_coa_db
@@ -30,6 +31,10 @@ def main(args=None):
          'Start up inference routine and classify occurences of cOA in abf file',
          argparse_dicts.get_run_inference_parser(),
          run_inference.main),
+        ('run_inference_bootstrapped',
+         'Bootstrap the inference routine',
+         argparse_dicts.get_run_inference_bootstrap_parser(),
+         run_inference_bootstrap.main),
     ]
 
     parser = argparse.ArgumentParser(

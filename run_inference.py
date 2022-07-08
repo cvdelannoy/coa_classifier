@@ -1,3 +1,4 @@
+import os
 from collections import Counter
 from pathlib import Path
 
@@ -29,24 +30,38 @@ class CoaInference:
         self.nn = tf.keras.models.load_model(nn)
         self.input_length = self.nn.input_shape[1]
 
-    def predict_from_file(self, abf_path):
+    def predict_from_file(self, abf_path, bootstrap=False):
         """Counts cOAs in single input file
 
         :param abf_path: path to .abf file
         :type abf_path: str
+        :param bootstrap: indicate if .abf file should be bootstrapped
+        :type bootstrap: bool
         :return: Counter object that contains
         :rtype: Counter
         """
         abf = AbfData(abf_path)
-        events = abf.get_pos(unfiltered=True)
+        events = abf.get_pos(unfiltered=False)
         x_pad = np.expand_dims(pad_sequences(events, maxlen=self.input_length,
                                              padding='post', truncating='post',
                                              dtype='float32'), -1)
+        if bootstrap:
+            x_pad = x_pad[np.random.randint(0, len(x_pad), size=len(x_pad))]
         y_hat = self.nn.predict(x_pad)
         y_hat = np.argmax(y_hat, axis=1)
         return [INDEX_TO_TARGET[i] for i in y_hat]
 
 def main(args):
+    if args.no_gpu:
+        # Limit resources
+        os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+        os.environ["OMP_NUM_THREADS"] = "1"
+        os.environ["TF_NUM_INTRAOP_THREADS"] = "1"
+        os.environ["TF_NUM_INTEROP_THREADS"] = "1"
+        tf.config.threading.set_intra_op_parallelism_threads(1)
+        tf.config.threading.set_inter_op_parallelism_threads(1)
+        tf.config.set_soft_device_placement(True)
+
     inference_model = CoaInference(args.nn_path)
 
     y_true = []
@@ -57,14 +72,17 @@ def main(args):
         # if 'cOA5' in abf.name:
         #     continue
         print(f'Processing {abf.name}')
-        y_pred = inference_model.predict_from_file(str(abf))
+        y_pred = inference_model.predict_from_file(str(abf), args.bootstrap)
         # print(y_pred)
         true_coa = abf.name[:4]
         y_true.extend([true_coa] * len(y_pred))
         y_pred_list.extend(y_pred)
-        if i > 5:
-            break
-
+        # if i > 5:
+        #     break
+    conf_mat = confusion_matrix(y_true, y_pred_list)
+    np.savetxt(args.out_dir + 'confmat.csv', conf_mat)
+    with open(args.out_dir + 'summary_stats.yaml', 'w') as fh:
+        fh.write(f'balanced_accuracy: {balanced_accuracy_score(y_true, y_pred_list)}\n')
     print(confusion_matrix(y_true, y_pred_list))
     print('Balanced accuracy', balanced_accuracy_score(y_true, y_pred_list))
 

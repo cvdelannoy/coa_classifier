@@ -172,11 +172,38 @@ def get_run_inference_parser():
         'help': 'Path to trained network saved as .h5 file'
     })
 
+    bootstrap = ('--bootstrap', {
+        'action': 'store_true',
+        'help': 'Bootstrap data per abf file'
+    })
+
+    no_gpu = ('--no-gpu', {
+        'action': 'store_true',
+        'help': 'Do not use GPU if available'
+    })
+
     parser = argparse.ArgumentParser(description='Start up inference for abf files.')
-    for arg in (abf_in, out_dir, nn_dir):
+    for arg in (abf_in, out_dir, nn_dir, bootstrap, no_gpu):
         parser.add_argument(arg[0], **arg[1])
     return parser
 
+def get_run_inference_bootstrap_parser():
+    bootstrap_iters = ('--bootstrap-iters', {
+        'type': int,
+        'default': 100,
+        'help': 'Number of bootstrap iterations to perform [default: 100]'
+    })
+
+    cores = ('--cores', {
+        'type': int,
+        'default': 4,
+        'help': 'Nb of cores to engage simultaneously [default: 4]'
+    })
+
+    parser = get_run_inference_parser()
+    for arg in (bootstrap_iters, cores):
+        parser.add_argument(arg[0], **arg[1])
+    return parser
 
 # --- argument checking ---
 def check_db_input(db_fn):
