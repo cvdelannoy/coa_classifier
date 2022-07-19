@@ -22,6 +22,5 @@ rule run_inference:
             --abf-in {{ abf_in }} \
             --nn-path {{ nn_path }} \
             --out-dir {{ bs_dir }}bs_{wildcards.ix} \
-            --bootstrap \
-            --no-gpu  &> {{ log_dir }}run_inference_{wildcards.ix}.log
+            --bootstrap &> {{ log_dir }}run_inference_{wildcards.ix}.log
         '''
