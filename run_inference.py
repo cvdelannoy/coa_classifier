@@ -18,12 +18,13 @@ TARGET_TO_INDEX = {'cOA3': 0,
 INDEX_TO_TARGET = {v: k for k, v in TARGET_TO_INDEX.items()}
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
-tf.config.set_visible_devices(gpus[1:], 'GPU')
+# tf.config.set_visible_devices(gpus[1:], 'GPU')
+
 
 class CoaInference:
     """Class that uses generated CNNs to detect cOAs in abf files
 
-    :param nn_dir: Path to directory that contains folders with cOA?/nn.h5 files
+    :param nn_dir: Path to directory that contains folders with nn.h5 file
     :type nn_dir: Path
     """
     def __init__(self, nn):
@@ -68,21 +69,25 @@ def main(args):
     y_pred_list = []
 
     for i, abf in enumerate(Path(args.abf_in).iterdir()):
-        # # Uncomment to omit the coa5 file
-        # if 'cOA5' in abf.name:
-        #     continue
         print(f'Processing {abf.name}')
-        y_pred = inference_model.predict_from_file(str(abf), args.bootstrap)
-        # print(y_pred)
-        true_coa = abf.name[:4]
-        y_true.extend([true_coa] * len(y_pred))
+        y_pred = inference_model.predict_from_file(abf, args.bootstrap)
         y_pred_list.extend(y_pred)
-        # if i > 5:
-        #     break
+        true_coa = abf.name[:4]
+        if not true_coa.lower().startswith('coa'):
+            # Looking at file of unknown type
+            true_coa = 'UNKNOWN'
+        y_true.extend([true_coa] * len(y_pred))
+        # print("Y pred", y_pred)
+        # print('Y true', y_true)
+
     conf_mat = confusion_matrix(y_true, y_pred_list)
     np.savetxt(args.out_dir + 'confmat.csv', conf_mat)
+    pred_counts = Counter(y_pred_list)
+
     with open(args.out_dir + 'summary_stats.yaml', 'w') as fh:
         fh.write(f'balanced_accuracy: {balanced_accuracy_score(y_true, y_pred_list)}\n')
+        for key, value in pred_counts.items():
+            fh.write(f"{key}: {value}\n")
     print(confusion_matrix(y_true, y_pred_list))
     print('Balanced accuracy', balanced_accuracy_score(y_true, y_pred_list))
 
