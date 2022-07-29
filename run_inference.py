@@ -1,4 +1,4 @@
-import os
+import os, yaml
 from collections import Counter
 from pathlib import Path
 
@@ -8,14 +8,6 @@ from sklearn.metrics import confusion_matrix, balanced_accuracy_score
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 from db_building.AbfData import AbfData
-
-# Map target coa to correct index
-TARGET_TO_INDEX = {'cOA3': 0,
-                   'cOA4': 1,
-                   'cOA5': 2,
-                   'cOA6': 3}
-
-INDEX_TO_TARGET = {v: k for k, v in TARGET_TO_INDEX.items()}
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 # tf.config.set_visible_devices(gpus[1:], 'GPU')
@@ -27,9 +19,11 @@ class CoaInference:
     :param nn_dir: Path to directory that contains folders with nn.h5 file
     :type nn_dir: Path
     """
-    def __init__(self, nn):
+    def __init__(self, nn, event_type_dict):
         self.nn = tf.keras.models.load_model(nn)
         self.input_length = self.nn.input_shape[1]
+        self.target_to_index = {x: i for i, x in enumerate(np.unique(list(event_type_dict.values())))}
+        self.index_to_target = {v: k for k, v in self.target_to_index.items()}
 
     def predict_from_file(self, abf_path, bootstrap=False):
         """Counts cOAs in single input file
@@ -50,7 +44,7 @@ class CoaInference:
             x_pad = x_pad[np.random.randint(0, len(x_pad), size=len(x_pad))]
         y_hat = self.nn.predict(x_pad)
         y_hat = np.argmax(y_hat, axis=1)
-        return [INDEX_TO_TARGET[i] for i in y_hat]
+        return [self.index_to_target[i] for i in y_hat]
 
 def main(args):
     if args.no_gpu:
@@ -62,8 +56,12 @@ def main(args):
         tf.config.threading.set_intra_op_parallelism_threads(1)
         tf.config.threading.set_inter_op_parallelism_threads(1)
         tf.config.set_soft_device_placement(True)
+    with open(args.event_types, 'r') as fh:
+        event_type_dict = yaml.load(fh, yaml.FullLoader)
 
-    inference_model = CoaInference(args.nn_path)
+    inference_model = CoaInference(args.nn_path, event_type_dict)
+    with open(args.event_types, 'r') as fh:
+        event_type_dict = yaml.load(fh, yaml.FullLoader)
 
     y_true = []
     y_pred_list = []
@@ -72,7 +70,7 @@ def main(args):
         print(f'Processing {abf.name}')
         y_pred = inference_model.predict_from_file(abf, args.bootstrap)
         y_pred_list.extend(y_pred)
-        true_coa = abf.name[:4]
+        true_coa = event_type_dict.get(abf.name[:4].lower(), abf.name[:4].lower())
         if not true_coa.lower().startswith('coa'):
             # Looking at file of unknown type
             true_coa = 'UNKNOWN'

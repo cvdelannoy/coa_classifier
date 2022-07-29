@@ -4,6 +4,7 @@ bs_dir = '{{ bs_dir }}'
 log_dir = '{{ log_dir }}'
 nn_path = '{{ nn_path }}'
 abf_in = '{{ abf_in }}'
+event_types = '{{ event_types }}'
 
 bs_iters = int('{{ bootstrap_iters }}')
 
@@ -22,5 +23,6 @@ rule run_inference:
             --abf-in {{ abf_in }} \
             --nn-path {{ nn_path }} \
             --out-dir {{ bs_dir }}bs_{wildcards.ix} \
+            --event-types {{ event_types }} \
             --bootstrap &> {{ log_dir }}run_inference_{wildcards.ix}.log
         '''

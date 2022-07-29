@@ -1,4 +1,4 @@
-import sys
+import sys, yaml
 from os.path import isdir, dirname
 from pathlib import Path
 from shutil import rmtree
@@ -22,6 +22,8 @@ def main(args):
 
     file_list = parse_input_path(args.abf_in, pattern='*.abf')
     db_name = out_path+'db.fs'
+    with open(args.event_types, 'r') as fh:
+        event_type_dict = yaml.load(fh, yaml.FullLoader)
 
     db = ExampleDb(db_name=db_name)
     # By default, only use unfiltered segments
@@ -30,7 +32,7 @@ def main(args):
     for i, file in enumerate(file_list):
         print(f'Processing {file}')
         tr = AbfData(abf_fn=file, normalization=args.normalization,
-                     lowpass_freq=80, baseline_fraction=0.65)
+                     lowpass_freq=80, baseline_fraction=0.65, event_type_dict=event_type_dict)
         print(f'Event summaries for {tr.coa_type}')
         print(pd.Series(tr.get_event_lengths()).describe())
 

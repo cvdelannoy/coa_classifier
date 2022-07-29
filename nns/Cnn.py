@@ -24,6 +24,7 @@ class NeuralNetwork(object):
 
     def __init__(self, **kwargs):
         # Filter_width can be set to false, which creates variable input length
+        self.nb_classes = kwargs['nb_classes']
         self.filter_width = kwargs['filter_width']
         self.kernel_size = kwargs['kernel_size']
         self.batch_size = kwargs['batch_size']
@@ -68,7 +69,7 @@ class NeuralNetwork(object):
         # self.model.add(layers.GlobalAvgPool1D())
         self.model.add(layers.Flatten())
         self.model.add(layers.Dropout(self.dropout_remove_prob))
-        self.model.add(layers.Dense(4, activation='softmax'))
+        self.model.add(layers.Dense(self.nb_classes, activation='softmax'))
         self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.learning_rate),
                            loss=tf.keras.losses.CategoricalCrossentropy(),
                            metrics=[CategoricalAccuracy(), Precision(), Recall()])

@@ -7,17 +7,6 @@ import pyabf
 import pyabf.filter
 
 
-def coa_to_one_hot(coa_type):
-    """Returns one hot encoding based on COA type.
-    :parameter coa_type: strings such as 'coa4' or 'coa6'
-    """
-    valid_coas = [3, 4, 5, 6]
-    coa_number = int(coa_type[3])
-    one_hot = np.zeros_like(valid_coas)
-    one_hot[valid_coas.index(coa_number)] = 1
-    return one_hot
-
-
 class AbfData:
     """Class for squiggle data extracted from an axon binary file
     :param abf_fn: abf file name
@@ -30,7 +19,7 @@ class AbfData:
     :type baseline_fraction: float
     """
     def __init__(self, abf_fn, normalization=False, lowpass_freq=80,
-                 baseline_fraction=0.65):
+                 baseline_fraction=0.65, event_type_dict={}):
         self.abf_fn = Path(abf_fn)
         self.normalization = normalization
         # Convert from KHz to ms
@@ -39,7 +28,7 @@ class AbfData:
         self.baseline_level = np.median(self.raw)
         self.pos_events = self.set_pos_events(baseline_fraction)
         # coa_type describes if a coa 3,4,5,6. Currently extracted from filename
-        self.coa_type = self.abf_fn.name[:4].lower()
+        self.coa_type = event_type_dict.get(self.abf_fn.name[:4].lower(), self.abf_fn.name[:4].lower())
 
     @property
     def raw(self):

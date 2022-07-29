@@ -75,18 +75,17 @@ cores = ('--cores', {
     'help': 'Maximum number of CPU cores to engage at once.'
 })
 
+event_types = ('--event-types', {
+    'type': str,
+    'default': __location__ + '/coa_types.yaml'
+})
 
 # --- PARSERS ---
 def get_run_production_pipeline_parser():
-    coa_list = ('--coa-list', {
-        'type': str,
-        'help': 'txt list of k-mers',
-        'default': ''  # need it to be existent; passed to production pipeline
-    })
 
     parser = argparse.ArgumentParser(description='Generate DBs from read sets and generate RNNs for several k-mers '
                                                  'at once')
-    for arg in (training_abfs, test_abfs, out_dir, coa_list, cores,
+    for arg in (training_abfs, test_abfs, out_dir, cores,
                 parameter_file):
         parser.add_argument(arg[0], **arg[1])
     return parser
@@ -145,7 +144,7 @@ def get_training_parser():
 
     parser = argparse.ArgumentParser(description='Train a network to detect a given cOA in abf data.')
     for arg in (training_db, test_db, nn_dir, tensorboard_path, plots_path, parameter_file,
-                model_weights, ckpt_model):
+                model_weights, ckpt_model, event_types):
         parser.add_argument(arg[0], **arg[1])
     return parser
 
@@ -160,7 +159,12 @@ def get_build_db_parser():
         'help': 'Maximum number of examples to store in DB [default: 10000]'
     })
 
-    for arg in (abf_in, db_dir, normalization, max_nb_examples):
+    event_types = ('--event-types', {
+        'type': str,
+        'default': __location__ + '/coa_types.yaml'
+    })
+
+    for arg in (abf_in, db_dir, normalization, max_nb_examples, event_types):
         parser.add_argument(arg[0], **arg[1])
     return parser
 
@@ -183,7 +187,7 @@ def get_run_inference_parser():
     })
 
     parser = argparse.ArgumentParser(description='Start up inference for abf files.')
-    for arg in (abf_in, out_dir, nn_dir, bootstrap, no_gpu):
+    for arg in (abf_in, out_dir, nn_dir, bootstrap, no_gpu, event_types):
         parser.add_argument(arg[0], **arg[1])
     return parser
 

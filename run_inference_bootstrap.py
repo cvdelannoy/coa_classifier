@@ -9,11 +9,13 @@ from glob import glob
 import yaml
 
 from resources.helper_functions import parse_output_path
-from run_inference import TARGET_TO_INDEX
 
 __location__ = str(Path(__file__).resolve().parents[0])
 
 def main(args):
+    with open(args.event_types, 'r') as fh:
+        event_type_dict = yaml.load(fh, yaml.FullLoader)
+    TARGET_TO_INDEX = {x: i for i, x in enumerate(np.unique(list(event_type_dict.values())))}
     _ = parse_output_path(args.out_dir, clean=True)
     bs_dir = parse_output_path(args.out_dir + 'bootstrapped_results')
     log_dir = parse_output_path(args.out_dir + 'logs')
@@ -26,7 +28,8 @@ def main(args):
         log_dir=log_dir,
         nn_path=args.nn_path,
         abf_in=args.abf_in,
-        bootstrap_iters=args.bootstrap_iters
+        bootstrap_iters=args.bootstrap_iters,
+        event_types=str(Path(args.event_types).resolve())
     )
     sf_fn = args.out_dir + 'run_inference_bootstrap.sf'
     with open(sf_fn, 'w') as fh: fh.write(sm_txt_out)

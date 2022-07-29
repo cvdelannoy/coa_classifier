@@ -19,7 +19,7 @@ if gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
 
 
-def load_db(db_dir, read_only=False):
+def load_db(db_dir, event_types, read_only=False):
     """Load database from given directory
 
     :param db_dir: path to directory, must contain a 'db.fs' file
@@ -30,11 +30,14 @@ def load_db(db_dir, read_only=False):
     """
     if db_dir[-1] != '/':
         db_dir += '/'
-    db = ExampleDb(db_name=db_dir + 'db.fs', read_only=read_only)
+
+    with open(event_types, 'r') as fh:
+        event_type_dict = yaml.load(fh, yaml.FullLoader)
+    db = ExampleDb(db_name=db_dir + 'db.fs', read_only=read_only, event_type_dict=event_type_dict)
     return db
 
 
-def train(parameter_file, training_data, test_data, model_weights=None,
+def train(parameter_file, training_data, test_data, event_types, model_weights=None,
           quiet=False):
     # Load parameter file
     if type(parameter_file) == str:
@@ -45,8 +48,8 @@ def train(parameter_file, training_data, test_data, model_weights=None,
         raise ValueError(f'{type(parameter_file)} is not a valid data type for a parameter file')
 
     # Load train & test data
-    test_db = load_db(test_data, read_only=True)
-    train_db = load_db(training_data, read_only=True)
+    test_db = load_db(test_data, event_types, read_only=True)
+    train_db = load_db(training_data, event_types, read_only=True)
 
     # Create save-file for model if required
     cp_callback = None
@@ -54,7 +57,7 @@ def train(parameter_file, training_data, test_data, model_weights=None,
     # create nn
     nn_class = importlib.import_module(f'nns.{params["nn_class"]}').NeuralNetwork
     nn = nn_class(**params, weights=model_weights,
-                  cp_callback=cp_callback)
+                  cp_callback=cp_callback, nb_classes=train_db.nb_targets)
 
     # Start training
     x_val, y_val = test_db.get_training_set()
@@ -73,6 +76,6 @@ def train(parameter_file, training_data, test_data, model_weights=None,
 
 def main(args):
     nn_target_dir = parse_output_path(f'{args.nn_dir}')
-    nn = train(args.parameter_file, args.training_db, args.test_db,
+    nn = train(args.parameter_file, args.training_db, args.test_db, args.event_types,
                args.model_weights, False)
     nn.model.save(f'{nn_target_dir}nn.h5')
