@@ -24,5 +24,6 @@ rule run_inference:
             --nn-path {{ nn_path }} \
             --out-dir {{ bs_dir }}bs_{wildcards.ix} \
             --event-types {{ event_types }} \
+            --no-gpu \
             --bootstrap &> {{ log_dir }}run_inference_{wildcards.ix}.log
         '''

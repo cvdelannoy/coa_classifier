@@ -80,6 +80,11 @@ event_types = ('--event-types', {
     'default': __location__ + '/coa_types.yaml'
 })
 
+normalize_rates = ('--normalize-rates', {
+    'action': 'store_true',
+    'help': 'For mixtures, normalize measured abundances for difference in capture rates.'
+})
+
 # --- PARSERS ---
 def get_run_production_pipeline_parser():
 
@@ -205,7 +210,7 @@ def get_run_inference_bootstrap_parser():
     })
 
     parser = get_run_inference_parser()
-    for arg in (bootstrap_iters, cores):
+    for arg in (bootstrap_iters, cores, normalize_rates):
         parser.add_argument(arg[0], **arg[1])
     return parser
 

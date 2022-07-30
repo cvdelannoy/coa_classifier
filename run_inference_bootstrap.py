@@ -20,6 +20,7 @@ def main(args):
     bs_dir = parse_output_path(args.out_dir + 'bootstrapped_results')
     log_dir = parse_output_path(args.out_dir + 'logs')
 
+
     with open(__location__ + '/run_inference_bootstrap.sf') as fh:
         sm_text = fh.read()
     sm_txt_out = Template(sm_text).render(
@@ -39,7 +40,19 @@ def main(args):
     # --- combine results ---
     analysis_dir = parse_output_path(args.out_dir + 'analysis')
     confmat_array = np.dstack([np.loadtxt(fn) for fn in glob(f'{bs_dir}*/confmat.csv')])
+    labels_list = []
+    for fn in glob(f'{bs_dir}*/confmat_labels.txt'):
+        with open(fn, 'r') as fh: labels_list.append([ll.strip() for ll in fh.readlines()])
+    assert np.all( [np.all(labels_list[0] == ll) for ll in labels_list])
+    labels = labels_list[0]
     np.save(f'{analysis_dir}confmats.npy', confmat_array)
+
+    if args.normalize_rates:
+        with open(f'{__location__}/resources/coa_rates.yaml', 'r') as fh:
+            rates_dict = yaml.load(fh, yaml.FullLoader)
+        rates_vec = np.array([rates_dict.get(l, 1.0) for l in labels])
+        rates_vec = np.expand_dims(np.expand_dims(rates_vec, 0), -1)
+        confmat_array = confmat_array / rates_vec
 
     # row-normalize
     confmat_norm = (confmat_array.transpose((1, 0, 2)) / confmat_array.sum(axis=1)).T
@@ -47,11 +60,11 @@ def main(args):
     np.save(f'{analysis_dir}confmats_normalized.npy', confmat_norm)
 
     # mean and std
-    mean_df = pd.DataFrame(confmat_norm.mean(axis=0), index=list(TARGET_TO_INDEX), columns=list(TARGET_TO_INDEX))
+    mean_df = pd.DataFrame(confmat_norm.mean(axis=0), index=labels, columns=labels)
     mean_df.rename_axis('Truth', axis='rows', inplace=True)
     mean_df.rename_axis('Predicted', axis='columns', inplace=True)
     mean_df.to_csv(f'{analysis_dir}confmats_mean.csv')
-    sd_df = pd.DataFrame(confmat_norm.std(axis=0), index=list(TARGET_TO_INDEX), columns=list(TARGET_TO_INDEX))
+    sd_df = pd.DataFrame(confmat_norm.std(axis=0), index=labels, columns=labels)
     sd_df.to_csv(f'{analysis_dir}confmats_std.csv')
 
     # Collect summary_stats

@@ -77,9 +77,10 @@ def main(args):
         y_true.extend([true_coa] * len(y_pred))
         # print("Y pred", y_pred)
         # print('Y true', y_true)
-
-    conf_mat = confusion_matrix(y_true, y_pred_list)
+    label_list = np.unique(np.concatenate((np.unique(y_true), np.unique(y_pred_list))))
+    conf_mat = confusion_matrix(y_true, y_pred_list, labels=label_list)
     np.savetxt(args.out_dir + 'confmat.csv', conf_mat)
+    with open(args.out_dir + 'confmat_labels.txt', 'w') as fh: fh.write('\n'.join(list(label_list)))
     pred_counts = Counter(y_pred_list)
 
     with open(args.out_dir + 'summary_stats.yaml', 'w') as fh:
