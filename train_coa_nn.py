@@ -61,9 +61,9 @@ def train(parameter_file, training_data, test_data, event_types, model_weights=N
 
     # Start training
     x_val, y_val = test_db.get_training_set()
-
-    x_train, y_train = train_db.get_training_set(oversampling=params['oversampling'])
-    nn.train(x_train, y_train, x_val, y_val, quiet=quiet, epochs=params['epochs'])
+    for i in range(params['redraws']):
+        x_train, y_train = train_db.get_training_set(oversampling=params['oversampling'])
+        nn.train(x_train, y_train, x_val, y_val, quiet=quiet, epochs=params['epochs'] // params['redraws'])
 
     # Uncomment to print confusion matrix
     # Rows are true labels, columns are predicted labels

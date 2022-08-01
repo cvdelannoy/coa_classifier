@@ -9,7 +9,8 @@ nn_class: Cnn
 batch_norm: 1
 batch_size: 32
 dropout_keep_prob: 0.8
-epochs: 25
+epochs: 50
+redraws: 5
 filter_width: 250
 filters: 10
 kernel_size: 25
