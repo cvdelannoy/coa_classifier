@@ -191,8 +191,13 @@ def get_run_inference_parser():
         'help': 'Do not use GPU if available'
     })
 
+    save_traces = ('--save-traces', {
+        'action': 'store_true',
+        'help': 'Save traces in separate files, for correct and incorrectly classified'
+    })
+
     parser = argparse.ArgumentParser(description='Start up inference for abf files.')
-    for arg in (abf_in, out_dir, nn_dir, bootstrap, no_gpu, event_types):
+    for arg in (abf_in, out_dir, nn_dir, bootstrap, no_gpu, event_types, save_traces):
         parser.add_argument(arg[0], **arg[1])
     return parser
 
