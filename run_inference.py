@@ -8,7 +8,6 @@ from sklearn.metrics import confusion_matrix, balanced_accuracy_score
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 import matplotlib.pyplot as plt
-import pandas as pd
 
 from db_building.AbfData import AbfData
 from resources.helper_functions import parse_output_path
@@ -84,25 +83,25 @@ def main(args):
             true_coa = 'UNKNOWN'
         if args.save_traces:
             abf_id = os.path.splitext(abf.name)[0]
-            tdir = parse_output_path(f'{args.out_dir}{abf_id}/T/')
-            fdir = parse_output_path(f'{args.out_dir}{abf_id}/F/')
+            plot_dir_dict = {class_id: parse_output_path(f'{args.out_dir}{abf_id}/{class_id}/')
+                             for class_id in np.unique(y_pred)}
             fig, (ax_t, ax_f) = plt.subplots(2,1, figsize=(10,10))
             x = np.arange(x_traces.shape[1])
             for ti, (xt, yp) in enumerate(zip(x_traces, y_pred)):
                 fig_single, ax = plt.subplots(figsize=(10, 5))
                 ax.plot(x, xt)
+                fig_single.savefig(f'{plot_dir_dict[yp]}{ti}.svg')
+                plt.close(fig_single)
                 if yp == true_coa:
                     ax_t.plot(x,xt)
-                    fig_single.savefig(f'{tdir}{ti}.svg')
                 else:
                     ax_f.plot(x, xt)
-                    fig_single.savefig(f'{fdir}{ti}.svg')
-                plt.close(fig_single)
             fig.savefig(f'{args.out_dir}{abf_id}/all_traces.svg')
             plt.close(fig)
             y_pred_idx = [f'{yi},{yp}' for yi, yp in enumerate(y_pred)]
             with open(f'{args.out_dir}{abf_id}/prediction.csv', 'w') as fh:
                 fh.write('\n'.join(y_pred_idx))
+            np.save(f'{args.out_dir}{abf_id}/traces.npy', x_traces)
         y_true.extend([true_coa] * len(y_pred))
         # print("Y pred", y_pred)
         # print('Y true', y_true)

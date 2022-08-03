@@ -91,7 +91,7 @@ def get_run_production_pipeline_parser():
     parser = argparse.ArgumentParser(description='Generate DBs from read sets and generate RNNs for several k-mers '
                                                  'at once')
     for arg in (training_abfs, test_abfs, out_dir, cores,
-                parameter_file):
+                parameter_file, event_types):
         parser.add_argument(arg[0], **arg[1])
     return parser
 
@@ -162,11 +162,6 @@ def get_build_db_parser():
         'type': int,
         'default': 10000,
         'help': 'Maximum number of examples to store in DB [default: 10000]'
-    })
-
-    event_types = ('--event-types', {
-        'type': str,
-        'default': __location__ + '/coa_types.yaml'
     })
 
     for arg in (abf_in, db_dir, normalization, max_nb_examples, event_types):

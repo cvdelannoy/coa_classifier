@@ -7,6 +7,7 @@ nn_dir = '{{ nn_dir }}'
 logs_dir= '{{ logs_dir }}'
 parameter_file = '{{ parameter_file }}'
 filter_width = "{{ filter_width }}"
+event_types = "{{ event_types }}"
 
 rule target:
     input:
@@ -28,6 +29,7 @@ rule generate_nn:
             --training-db {input.db_train} \
             --test-db {input.db_test} \
             --nn-dir {nn_dir} \
+            --event-types {{ event_types }} \
             --parameter-file {parameter_file} &> {logs_dir}nn.log
         """
 
@@ -43,6 +45,7 @@ rule generate_training_db:
         python {__location__} build_db \
             --abf-in {input.reads} \
             --db-dir {db_dir}train/ \
+            --event-types {{ event_types }} \
             --max-nb-examples 500000 &> {logs_dir}db_train.log
         """
 
@@ -58,5 +61,6 @@ rule generate_test_db:
         python {__location__} build_db \
             --abf-in {input.reads} \
             --db-dir {db_dir}test/ \
+            --event-types {{ event_types }} \
             --max-nb-examples 500000 &>{logs_dir}db_test.log
         """
