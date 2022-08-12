@@ -27,3 +27,12 @@ def binary_accuracy(y_true, y_pred):
     result = backend.mean(backend.equal(y_true, yh))
     # assert not tf.math.is_nan(result)
     return result
+
+@tf.function
+def ordinal_accuracy(y_true, y_pred):
+    yh = backend.sum(backend.cast_to_floatx(backend.greater_equal(y_pred, 0.5)), 1)
+    yt = backend.sum(backend.cast_to_floatx(backend.equal(y_true, 1)), 1)
+    # yh = backend.concatenate([backend.max(tf.where(x)) for x in backend.greater_equal(y_pred, 0.5)])
+    # yt = backend.concatenate([backend.max(tf.where(x)) for x in backend.equal(y_true, 1)])
+    result = backend.mean(backend.equal(yt, yh))
+    return result

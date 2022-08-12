@@ -5,11 +5,11 @@
 
 
 # CNN ARCHITECTURE
-nn_class: Cnn
+nn_class: Cnn_explicitLength
 batch_norm: 1
 batch_size: 32
 dropout_keep_prob: 0.8
-epochs: 50
+epochs: 100
 redraws: 1
 filter_width: 250
 filters: 10

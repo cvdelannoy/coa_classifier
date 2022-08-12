@@ -10,7 +10,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 import matplotlib.pyplot as plt
 
 from db_building.AbfData import AbfData
-from resources.helper_functions import parse_output_path
+from resources.helper_functions import parse_output_path, parse_input_path
 # tf.config.set_visible_devices(gpus[1:], 'GPU')
 
 
@@ -22,11 +22,15 @@ class CoaInference:
     """
     def __init__(self, nn, event_type_dict):
         self.nn = tf.keras.models.load_model(nn)
-        self.input_length = self.nn.input_shape[1]
+        input_shapes = self.nn.input_shape
+        if type(input_shapes) == list:  # input consists of multiple tensors  -> take first
+            self.input_length = input_shapes[0][1]
+        elif type(input_shapes) == tuple:  # input consists of single tensor
+            self.input_length = input_shapes[1]
         self.target_to_index = {x: i for i, x in enumerate(np.unique(list(event_type_dict.values())))}
         self.index_to_target = {v: k for k, v in self.target_to_index.items()}
 
-    def predict_from_file(self, abf_path, bootstrap=False, return_traces=False):
+    def predict_from_file(self, abf_path, event_type_dict, bootstrap=False, return_traces=False):
         """Counts cOAs in single input file
 
         :param abf_path: path to .abf file
@@ -36,14 +40,21 @@ class CoaInference:
         :return: Counter object that contains
         :rtype: Counter
         """
-        abf = AbfData(abf_path)
+        abf = AbfData(abf_path, normalization='median',
+                      lowpass_freq=80,
+                      baseline_fraction=0.65,
+                      event_type_dict=event_type_dict)
         events = abf.get_pos(unfiltered=False)
         x_pad = np.expand_dims(pad_sequences(events, maxlen=self.input_length,
                                              padding='post', truncating='post',
                                              dtype='float32'), -1)
         if bootstrap:
             x_pad = x_pad[np.random.randint(0, len(x_pad), size=len(x_pad))]
-        y_hat = self.nn.predict(x_pad)
+        if len(self.nn.inputs) == 2:
+            x_lens = np.array([len(x) for x in events])
+            y_hat = self.nn.predict([x_pad, x_lens])
+        else:
+            y_hat = self.nn.predict(x_pad)
         y_hat = np.argmax(y_hat, axis=1)
         y_pred = [self.index_to_target[i] for i in y_hat]
         if return_traces:
@@ -71,9 +82,10 @@ def main(args):
     y_true = []
     y_pred_list = []
 
-    for i, abf in enumerate(Path(args.abf_in).iterdir()):
+    for i, abf in enumerate(parse_input_path(args.abf_in, pattern='*.abf')):
+        abf = Path(abf)
         print(f'Processing {abf.name}')
-        y_pred = inference_model.predict_from_file(abf, args.bootstrap, args.save_traces)
+        y_pred = inference_model.predict_from_file(abf, event_type_dict, args.bootstrap, args.save_traces)
         if args.save_traces:
             y_pred, x_traces = y_pred
         y_pred_list.extend(y_pred)
