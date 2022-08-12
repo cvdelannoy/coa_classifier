@@ -1,7 +1,7 @@
 import os
 import re
 import shutil
-
+import numpy as np
 from glob import glob
 
 wur_colors = ['#E5F1E4', '#3F9C35']
@@ -36,3 +36,16 @@ def parse_output_path(location, clean=False):
     if not os.path.isdir(location):
         os.makedirs(location)
     return location
+
+def normalize_raw_signal(raw, norm_method):
+    """
+    Normalize the raw DAC values
+
+    """
+    # Median normalization, as done by nanoraw (see nanoraw_helper.py)
+    if norm_method == 'median':
+        shift = np.median(raw)
+        scale = np.median(np.abs(raw - shift))
+    else:
+        raise ValueError('norm_method not recognized')
+    return (raw - shift) / scale

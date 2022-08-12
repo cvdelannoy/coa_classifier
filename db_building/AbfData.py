@@ -6,6 +6,7 @@ import numpy as np
 import pyabf
 import pyabf.filter
 
+from resources.helper_functions import normalize_raw_signal
 
 class AbfData:
     """Class for squiggle data extracted from an axon binary file
@@ -127,11 +128,11 @@ class AbfData:
             start_idx = event[0] - 15
             end_idx = event[-1] + 15
             if take_one:
-                return self.unfiltered_raw[start_idx: end_idx]
+                return normalize_raw_signal(self.unfiltered_raw[start_idx: end_idx], self.normalization)
             if unfiltered:
-                pos_list.append(self.unfiltered_raw[start_idx: end_idx])
+                pos_list.append(normalize_raw_signal(self.unfiltered_raw[start_idx: end_idx], self.normalization))
             else:
-                pos_list.append(self.raw[start_idx: end_idx])
+                pos_list.append(normalize_raw_signal(self.raw[start_idx: end_idx], self.normalization))
         return pos_list
 
     def get_neg(self, width, nb_neg, unfiltered=False):
