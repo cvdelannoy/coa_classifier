@@ -91,7 +91,9 @@ class ExampleDb(object):
             print(f'Using {nr_of_examples} examples per class')
             for coa, signals in conn.root.examples.items():
                 one_hot = self.coa_to_one_hot(coa)
-                training_set_x.extend(random.choices(signals, k=nr_of_examples))
+                signals_selected = list(np.random.choice(np.array(signals, dtype=object), size=nr_of_examples,
+                                                        replace=nr_of_examples > len(signals)))
+                training_set_x.extend(signals_selected)
                 training_set_y.extend([one_hot] * nr_of_examples)
 
         # Shuffle
