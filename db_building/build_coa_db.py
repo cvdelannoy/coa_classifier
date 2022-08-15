@@ -41,4 +41,6 @@ def main(args):
         if db.nb_pos > args.max_nb_examples:
             print('Max number of examples reached')
             break
+        print(f'total # examples: {db.nb_pos}')
     db.pack_db()
+    print(f'Done! DB contains {db.nb_pos} examples')

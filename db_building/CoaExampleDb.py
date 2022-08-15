@@ -54,6 +54,7 @@ class ExampleDb(object):
             pos_examples = training_read.get_pos(unfiltered=unfiltered)
             for ex in pos_examples:
                 conn.root.examples[label].append(ex)
+                conn.root.examples._p_changed = True
             nb_new_positives = len(pos_examples)
 
             # --- update record nb positive examples ---

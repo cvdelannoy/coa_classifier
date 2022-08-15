@@ -166,7 +166,7 @@ def get_build_db_parser():
 
     max_nb_examples = ('--max-nb-examples', {
         'type': int,
-        'default': 10000,
+        'default': 1000000,
         'help': 'Maximum number of examples to store in DB [default: 10000]'
     })
 
