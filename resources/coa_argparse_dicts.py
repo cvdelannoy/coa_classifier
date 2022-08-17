@@ -155,7 +155,7 @@ def get_training_parser():
 
     parser = argparse.ArgumentParser(description='Train a network to detect a given cOA in abf data.')
     for arg in (training_db, test_db, nn_dir, tensorboard_path, plots_path, parameter_file,
-                model_weights, ckpt_model, event_types, pregen_test_set):
+                model_weights, ckpt_model, pregen_test_set):
         parser.add_argument(arg[0], **arg[1])
     return parser
 
@@ -203,7 +203,7 @@ def get_run_inference_parser():
     })
 
     parser = argparse.ArgumentParser(description='Start up inference for abf files.')
-    for arg in (abf_in, out_dir, nn_dir, bootstrap, no_gpu, event_types, save_traces):
+    for arg in (abf_in, out_dir, nn_dir, bootstrap, no_gpu, save_traces):
         parser.add_argument(arg[0], **arg[1])
     return parser
 

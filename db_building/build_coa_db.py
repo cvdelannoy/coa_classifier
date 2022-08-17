@@ -1,7 +1,7 @@
 import sys, yaml
 from os.path import isdir, dirname
 from pathlib import Path
-from shutil import rmtree
+from shutil import rmtree, copyfile
 
 import pandas as pd
 
@@ -22,6 +22,8 @@ def main(args):
 
     file_list = parse_input_path(args.abf_in, pattern='*.abf')
     db_name = out_path+'db.fs'
+    copyfile(args.event_types, f'{out_path}event_types.yaml')
+
     with open(args.event_types, 'r') as fh:
         event_type_dict = yaml.load(fh, yaml.FullLoader)
 

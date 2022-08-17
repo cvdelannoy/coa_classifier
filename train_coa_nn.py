@@ -1,4 +1,4 @@
-import importlib
+import importlib, h5py
 import os, pickle
 import sys
 
@@ -18,8 +18,13 @@ if gpus:
     for gpu in gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
 
+def save_model(nn, event_type_dict, fn):
+    assert fn.endswith('.h5')
+    nn.model.save(fn)
+    with h5py.File(fn, 'r+') as fh:
+        fh.attrs['event_type_dict'] = str(event_type_dict)
 
-def load_db(db_dir, event_types, read_only=False):
+def load_db(db_dir, read_only=False):
     """Load database from given directory
 
     :param db_dir: path to directory, must contain a 'db.fs' file
@@ -31,13 +36,13 @@ def load_db(db_dir, event_types, read_only=False):
     if db_dir[-1] != '/':
         db_dir += '/'
 
-    with open(event_types, 'r') as fh:
+    with open(f'{db_dir}event_types.yaml', 'r') as fh:
         event_type_dict = yaml.load(fh, yaml.FullLoader)
     db = ExampleDb(db_name=db_dir + 'db.fs', read_only=read_only, event_type_dict=event_type_dict)
     return db
 
 
-def train(nn_target_dir, parameter_file, training_data, test_data, event_types, model_weights=None,
+def train(nn_target_dir, parameter_file, training_data, test_data, model_weights=None,
           quiet=False, pregen_test_set=None):
     # Load parameter file
     if type(parameter_file) == str:
@@ -48,8 +53,9 @@ def train(nn_target_dir, parameter_file, training_data, test_data, event_types, 
         raise ValueError(f'{type(parameter_file)} is not a valid data type for a parameter file')
 
     # Load train & test data
-    test_db = load_db(test_data, event_types, read_only=True)
-    train_db = load_db(training_data, event_types, read_only=True)
+    test_db = load_db(test_data, read_only=True)
+    train_db = load_db(training_data, read_only=True)
+    assert train_db.event_type_dict == test_db.event_type_dict  # ensure that test and train dbs recognize same event types
 
     # Create save-file for model if required
     cp_callback = None
@@ -74,9 +80,12 @@ def train(nn_target_dir, parameter_file, training_data, test_data, event_types, 
     for mr in range(params['restarts']):
         nn = nn_class(**params, weights=model_weights,
                       cp_callback=cp_callback, nb_classes=train_db.nb_targets)
-        for i in range(params['redraws']):
-            x_train, y_train = train_db.get_training_set(oversampling=params['oversampling'])
-            nn.train(x_train, y_train, x_val, y_val, quiet=quiet, epochs=params['epochs'] // params['redraws'])
+        if os.path.exists(f'{nn_target_dir}nn_iter{mr}.h5'):
+            nn.model = tf.keras.models.load_model(f'{nn_target_dir}nn_iter{mr}.h5')
+        else:
+            for i in range(params['redraws']):
+                x_train, y_train = train_db.get_training_set(oversampling=params['oversampling'])
+                nn.train(x_train, y_train, x_val, y_val, quiet=quiet, epochs=params['epochs'] // params['redraws'])
         tr_acc_list = []
         for i in range(10):
             x_train, y_train = train_db.get_training_set(oversampling=params['oversampling'])
@@ -84,7 +93,7 @@ def train(nn_target_dir, parameter_file, training_data, test_data, event_types, 
         nn_list.append(nn); nn_acc_list.append(np.mean(tr_acc_list))
         val_acc = balanced_accuracy_score([int(np.where(i == 1)[0]) for i in y_val], nn.predict(x_val))
         with open(metrics_fn, 'a') as fh: fh.write(f'{mr}\t{val_acc}\n')
-        nn.model.save(f'{nn_target_dir}nn_iter{mr}.h5')
+        save_model(nn, train_db.event_type_dict, f'{nn_target_dir}nn_iter{mr}.h5')
         print(f'Validation accuracy iter {mr}: {val_acc}')
         tf.keras.backend.clear_session()
     nn = nn_list[np.argmax(nn_acc_list)]
@@ -97,15 +106,14 @@ def train(nn_target_dir, parameter_file, training_data, test_data, event_types, 
     if pregen_test_set:
         acc_list = []
         for xv, yv in test_list: acc_list.append(balanced_accuracy_score([int(np.where(i == 1)[0]) for i in yv], nn.predict(xv)))
-        acc = np.mean(acc_list)
         print(f'Balanced accuracy over {len(test_list)} test draws: ', np.mean(acc_list))
     else:
         print('Balanced accuracy', balanced_accuracy_score(true_labels, prediction))
-    return nn
+    return nn, train_db.event_type_dict
 
 
 def main(args):
     nn_target_dir = parse_output_path(f'{args.nn_dir}')
-    nn = train(nn_target_dir, args.parameter_file, args.training_db, args.test_db, args.event_types,
+    nn, event_type_dict = train(nn_target_dir, args.parameter_file, args.training_db, args.test_db,
                args.model_weights, False, args.pregen_test_set)
-    nn.model.save(f'{nn_target_dir}nn.h5')
+    save_model(nn, event_type_dict, f'{nn_target_dir}nn.h5')

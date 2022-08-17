@@ -29,7 +29,6 @@ rule generate_nn:
             --training-db {input.db_train} \
             --test-db {input.db_test} \
             --nn-dir {nn_dir} \
-            --event-types {{ event_types }} \
             --parameter-file {parameter_file} &> {logs_dir}nn.log
         """
 
