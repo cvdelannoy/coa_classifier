@@ -65,15 +65,15 @@ class CoaInference:
 
 
 def main(args):
-    if args.no_gpu:
-        # Limit resources
-        os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-        os.environ["OMP_NUM_THREADS"] = "1"
-        os.environ["TF_NUM_INTRAOP_THREADS"] = "1"
-        os.environ["TF_NUM_INTEROP_THREADS"] = "1"
-        tf.config.threading.set_intra_op_parallelism_threads(1)
-        tf.config.threading.set_inter_op_parallelism_threads(1)
-        tf.config.set_soft_device_placement(True)
+    # if args.no_gpu:
+    #     # Limit resources
+    #     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+    #     os.environ["OMP_NUM_THREADS"] = "1"
+    #     os.environ["TF_NUM_INTRAOP_THREADS"] = "1"
+    #     os.environ["TF_NUM_INTEROP_THREADS"] = "1"
+    #     tf.config.threading.set_intra_op_parallelism_threads(1)
+    #     tf.config.threading.set_inter_op_parallelism_threads(1)
+    #     tf.config.set_soft_device_placement(True)
 
     inference_model = CoaInference(args.nn_path)
 

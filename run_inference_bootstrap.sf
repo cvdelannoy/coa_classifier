@@ -16,10 +16,9 @@ rule run_inference:
     output:
         conf_mat='{{ bs_dir }}bs_{ix}/confmat.csv'
     threads: 1
-    resources:
-        gpu=1
     shell:
         '''
+        export CUDA_VISIBLE_DEVICES="-1"
         python {{ __location__ }} run_inference \
             --abf-in {{ abf_in }} \
             --nn-path {{ nn_path }} \

@@ -31,7 +31,7 @@ def main(args):
     sf_fn = args.out_dir + 'run_inference_bootstrap.sf'
     with open(sf_fn, 'w') as fh: fh.write(sm_txt_out)
 
-    snakemake(snakefile=sf_fn, cores=args.cores, keepgoing=True, resources={'gpu': 1})
+    snakemake(snakefile=sf_fn, cores=args.cores, keepgoing=True)
 
     # --- combine results ---
     analysis_dir = parse_output_path(args.out_dir + 'analysis')
