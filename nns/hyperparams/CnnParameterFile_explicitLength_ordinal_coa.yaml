@@ -1,0 +1,21 @@
+#########################################
+#      CONVOLUTIONAL NEURAL NETWORK     #
+#            PARAMETER FILE             #
+#########################################
+
+
+# CNN ARCHITECTURE
+nn_class: Cnn_explicitLength_ordinal
+batch_norm: 1
+batch_size: 32
+dropout_keep_prob: 0.8
+epochs: 50
+redraws: 1
+filter_width: 250
+filters: 10
+kernel_size: 25
+learning_rate: 0.002
+num_layers: 2
+pool_size: 12
+oversampling: True
+restarts: 10
