@@ -3,9 +3,10 @@ from os.path import isfile
 
 import ZODB
 import ZODB.FileStorage
+import numpy as np
 from persistent.mapping import PersistentMapping
 
-from db_building.AbfData import AbfData, coa_to_one_hot
+from db_building.AbfData import AbfData
 
 
 class ExampleDb(object):
@@ -22,6 +23,17 @@ class ExampleDb(object):
 
         self.read_only = kwargs.get('read_only', False)
         self.db = self.db_name
+        self.event_type_dict = kwargs.get('event_type_dict', {})
+        self.target_to_index = {x: i for i, x in enumerate(np.unique(list(self.event_type_dict.values())))}
+        self.nb_targets = len(self.target_to_index)
+
+    def coa_to_one_hot(self, coa_type):
+        """Returns one hot encoding based on COA type.
+        :parameter coa_type: strings such as 'coa4' or 'coa6'
+        """
+        one_hot = np.zeros(self.nb_targets, dtype=int)
+        one_hot[self.target_to_index[coa_type]] = 1
+        return one_hot
 
     def add_training_read(self, training_read, unfiltered):
         """Add training read with cOA events
@@ -42,6 +54,7 @@ class ExampleDb(object):
             pos_examples = training_read.get_pos(unfiltered=unfiltered)
             for ex in pos_examples:
                 conn.root.examples[label].append(ex)
+                conn.root.examples._p_changed = True
             nb_new_positives = len(pos_examples)
 
             # --- update record nb positive examples ---
@@ -78,8 +91,10 @@ class ExampleDb(object):
                 nr_of_examples = min(items_per_key, least_examples_in_class)
             print(f'Using {nr_of_examples} examples per class')
             for coa, signals in conn.root.examples.items():
-                one_hot = coa_to_one_hot(coa)
-                training_set_x.extend(random.choices(signals, k=nr_of_examples))
+                one_hot = self.coa_to_one_hot(coa)
+                signals_selected = list(np.random.choice(np.array(signals, dtype=object), size=nr_of_examples,
+                                                        replace=nr_of_examples > len(signals)))
+                training_set_x.extend(signals_selected)
                 training_set_y.extend([one_hot] * nr_of_examples)
 
         # Shuffle

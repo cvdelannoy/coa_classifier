@@ -49,27 +49,30 @@ class NeuralNetwork(object):
             self.model = tf.keras.models.load_model(weights)
 
         # First layer
-        self.model = models.Sequential()
-        input_shape = (self.filter_width, 1) if self.filter_width else (None, 1)
-        self.model.add(layers.Conv1D(self.filters,
-                                     kernel_size=self.kernel_size,
-                                     activation='relu',
-                                     input_shape=input_shape,
-                                     padding='valid'))
+        input = tf.keras.Input((self.filter_width, 1))
+        input_seqlen = tf.keras.Input((1))
+        x = input
+        # x_seqlen = tf.expand_dims(tf.tile(input_seqlen, (1, self.filter_width)), -1)  # implicit length feature v2
+        # x = layers.concatenate((x, x_seqlen), axis=-1)
+        x = layers.Conv1D(self.filters,
+                      kernel_size=self.kernel_size,
+                      activation='relu',
+                      padding='valid')(x)
         for _ in range(self.num_layers):
             if self.batch_norm:
-                self.model.add(layers.BatchNormalization())
-            # self.model.add(layers.AvgPool1D(2))
-            self.model.add(layers.Dropout(self.dropout_remove_prob))
-            self.model.add(layers.Conv1D(self.filters,
-                                         kernel_size=self.kernel_size,
-                                         activation='relu'))
+                x = layers.BatchNormalization()(x)
+            x = layers.Dropout(self.dropout_remove_prob)(x)
+            x = layers.Conv1D(self.filters, kernel_size=self.kernel_size, activation='relu')(x)
         if self.pool_size:
-            self.model.add(layers.MaxPool1D(self.pool_size))
-        # self.model.add(layers.GlobalAvgPool1D())
-        self.model.add(layers.Flatten())
-        self.model.add(layers.Dropout(self.dropout_remove_prob))
-        self.model.add(layers.Dense(self.nb_classes, activation='softmax'))
+            x = layers.MaxPool1D(self.pool_size)(x)
+        x = layers.Flatten()(x)
+        x = layers.Dropout(self.dropout_remove_prob)(x)
+        x = layers.concatenate((x, input_seqlen))  # implicit length feature v1
+        x = layers.Dense(x.shape[1] + 1, activation='relu')(x)
+        x = layers.Dense(self.nb_classes, activation='softmax')(x)
+        self.model = tf.keras.Model(inputs=[input, input_seqlen], outputs=x)
+
+
         self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.learning_rate),
                            loss=tf.keras.losses.CategoricalCrossentropy(),
                            metrics=[CategoricalAccuracy(), Precision(), Recall()])
@@ -93,7 +96,8 @@ class NeuralNetwork(object):
         # Pad input sequences
 
         maxlen = self.filter_width if self.filter_width else None
-
+        seq_lengths = np.expand_dims([len(xi) for xi in x], -1)
+        seq_lengths_val = np.expand_dims([len(xi) for xi in x_val], -1)
         x_pad = np.expand_dims(pad_sequences(x, maxlen=maxlen,
                                              padding='post', truncating='post',
                                              dtype='float32'), -1)
@@ -106,19 +110,16 @@ class NeuralNetwork(object):
         y = np.vstack(y)
         y_val = np.vstack(y_val)
 
-        # Create tensorflow dataset
-        tfd = tf.data.Dataset.from_tensor_slices((x_pad, y)).batch(
-              self.batch_size).shuffle(x_pad.shape[0],
-                                       reshuffle_each_iteration=True)
-
         # Early stopping mechanism
-        callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
-                                                    patience=20)
+        # callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
+        #                                             patience=20)
 
         # Train the model
-        self.model.fit(tfd, epochs=epochs,
-                       validation_data=(x_val_pad, y_val),
-                       verbose=[2, 0][quiet], callbacks=[callback])
+        self.model.fit(x={'input_1': x_pad, 'input_2': seq_lengths}, y=y, epochs=epochs,
+                       validation_data=((x_val_pad, seq_lengths_val), y_val), shuffle=True,
+                       verbose=[2, 0][quiet],
+                       # callbacks=[callback]
+                       )
 
     def predict(self, x, return_probs=False):
         """Given sequences input as x, predict if they contain target k-mer.
@@ -139,8 +140,9 @@ class NeuralNetwork(object):
                                              padding='post',
                                              truncating='post',
                                              dtype='float32'), -1)
+        seq_lengths = np.expand_dims([len(xi) for xi in x], -1)
 
-        posteriors = self.model.predict(x_pad)
+        posteriors = self.model.predict({'input_1': x_pad, 'input_2': seq_lengths})
         if return_probs:
             return posteriors
 

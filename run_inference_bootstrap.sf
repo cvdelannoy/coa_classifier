@@ -18,6 +18,7 @@ rule run_inference:
     threads: 1
     shell:
         '''
+        export CUDA_VISIBLE_DEVICES="-1"
         python {{ __location__ }} run_inference \
             --abf-in {{ abf_in }} \
             --nn-path {{ nn_path }} \

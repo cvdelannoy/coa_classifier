@@ -26,6 +26,7 @@ def main(args):
         train_reads=args.training_abfs,
         test_reads=args.test_abfs,
         filter_width=params['filter_width'],
+        event_types=args.event_types
     )
 
     sf_fn = f'{args.out_dir}nn_production_pipeline.sf'
