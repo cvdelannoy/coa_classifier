@@ -77,7 +77,7 @@ cores = ('--cores', {
 
 event_types = ('--event-types', {
     'type': str,
-    'default': __location__ + '/coa_types_4.yaml'
+    'default': __location__ + '../coa_types/coa_types_4.yaml'
 })
 
 normalize_rates = ('--normalize-rates', {
