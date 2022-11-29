@@ -84,7 +84,7 @@ def train(nn_target_dir, parameter_file, training_data, test_data, model_weights
             nn.model = tf.keras.models.load_model(f'{nn_target_dir}nn_iter{mr}.h5')
         else:
             for i in range(params['redraws']):
-                x_train, y_train = train_db.get_training_set(oversampling=params['oversampling'])
+                x_train, y_train = train_db.get_training_set(oversampling=params['oversampling'], noise_shift=0)
                 nn.train(x_train, y_train, x_val, y_val, quiet=quiet, epochs=params['epochs'] // params['redraws'])
         tr_acc_list = []
         for i in range(10):

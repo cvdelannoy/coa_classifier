@@ -41,7 +41,21 @@ def main(args):
         with open(fn, 'r') as fh: labels_list.append([ll.strip() for ll in fh.readlines()])
     assert np.all( [np.all(labels_list[0] == ll) for ll in labels_list])
     labels = labels_list[0]
+    labels_array = np.array(labels)
     np.save(f'{analysis_dir}confmats.npy', confmat_array)
+
+    if args.error_correct_rates:
+        with open(f'{__location__}/resources/error_correction_rates.yaml', 'r') as fh:
+            ec_dict = yaml.load(fh, yaml.FullLoader)
+        # new_array = confmat_array[-1,:,:,:]
+        ec_array = np.zeros_like(confmat_array)
+        for c1 in ec_dict:
+            ci1 = np.argwhere(labels_array == c1)[0,0]
+            for c2 in ec_dict[c1]:
+                ci2 = np.argwhere(labels_array == c2)[0, 0]
+                ec_array[:, ci1, :] = confmat_array[:, ci1, :] * -ec_dict[c1][c2]
+                ec_array[:, ci2, :] = confmat_array[:, ci1, :] * ec_dict[c1][c2]
+        confmat_array = confmat_array + ec_array
 
     if args.normalize_rates:
         with open(f'{__location__}/resources/coa_rates.yaml', 'r') as fh:

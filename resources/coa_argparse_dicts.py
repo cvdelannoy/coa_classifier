@@ -77,7 +77,7 @@ cores = ('--cores', {
 
 event_types = ('--event-types', {
     'type': str,
-    'default': __location__ + '../coa_types/coa_types_4.yaml'
+    'default': __location__ + '/../coa_types/coa_types_4.yaml'
 })
 
 normalize_rates = ('--normalize-rates', {
@@ -220,8 +220,13 @@ def get_run_inference_bootstrap_parser():
         'help': 'Nb of cores to engage simultaneously [default: 4]'
     })
 
+    error_correct_rates = ('--error-correct-rates', {
+        'action': 'store_true',
+        'help': 'Correct for known error rates in classification'
+    })
+
     parser = get_run_inference_parser()
-    for arg in (bootstrap_iters, cores, normalize_rates):
+    for arg in (bootstrap_iters, cores, normalize_rates, error_correct_rates):
         parser.add_argument(arg[0], **arg[1])
     return parser
 

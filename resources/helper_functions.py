@@ -46,6 +46,9 @@ def normalize_raw_signal(raw, norm_method):
     if norm_method == 'median':
         shift = np.median(raw)
         scale = np.median(np.abs(raw - shift))
+        return (raw - shift) / scale
+    elif norm_method == 'none':
+        return raw
     else:
         raise ValueError('norm_method not recognized')
-    return (raw - shift) / scale
+    # return (raw - shift) / scale

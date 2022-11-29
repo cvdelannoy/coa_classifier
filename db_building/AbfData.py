@@ -5,8 +5,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pyabf
 import pyabf.filter
-
+from scipy.signal import butter, sosfilt
 from resources.helper_functions import normalize_raw_signal
+import os
 
 class AbfData:
     """Class for squiggle data extracted from an axon binary file
@@ -21,9 +22,12 @@ class AbfData:
     """
     def __init__(self, abf_fn, normalization=False, lowpass_freq=80,
                  baseline_fraction=0.65, event_type_dict={}):
+        self.data_type = os.path.splitext(abf_fn)[1]
+        self.min_duration, self.max_duration = 25e-6, 0.1  # duration thresholds in s
         self.abf_fn = Path(abf_fn)
         self.normalization = normalization
         # Convert from KHz to ms
+        self.lowpass_freq = lowpass_freq
         self.smoothing_sigma = 1 / lowpass_freq
         self.raw = None
         self.baseline_level = np.median(self.raw)
@@ -40,16 +44,41 @@ class AbfData:
         """The raw signal, after applying low-pass filter"""
         if self.abf_fn.suffix == '.atf':
             abf = pyabf.ATF(self.abf_fn)
+        elif self.abf_fn.suffix == '.npz':
+            self.pos_events = list(np.load(self.abf_fn).values())
+            self._raw = np.concatenate(self.pos_events)
+            # self.pos_events = [normalize_raw_signal(x, self.normalization) for x in np.load(self.abf_fn).values()]
+            return
         else:
             abf = pyabf.ABF(self.abf_fn)
-        self.unfiltered_raw = abf.sweepY.copy()
-        pyabf.filter.gaussian(abf, self.smoothing_sigma)
-        # pyabf.filter.gaussian(abf, 0.001)
+        self.sample_rate = abf.sampleRate
+        self.ds = round(self.sample_rate / (self.lowpass_freq * 10e2))
+        self.post_decimation_step_size = self.ds / self.sample_rate
+        self.unfiltered_raw = abf.data[0].copy()
+        pyabf.filter.gaussian(abf, self.smoothing_sigma, channel=0)
         abf.setSweep(0)
+
         # Drop NaNs because they show up at the edges due to smoothing
-        self._raw = abf.sweepY[~np.isnan(abf.sweepY)]
-        self.unfiltered_raw = self.unfiltered_raw[~np.isnan(abf.sweepY)]
-        self.time_vector = abf.sweepX[~np.isnan(abf.sweepY)]
+        butter_filter = butter(100, 200 * 1000, 'lowpass', fs=self.sample_rate, output='sos')
+        sig_filtered = sosfilt(butter_filter, self.unfiltered_raw)
+        sig_filtered = abf.data[0].copy()
+
+        nanbool = ~np.isnan(sig_filtered)
+        self._raw = sig_filtered[nanbool]
+
+        # Decimation
+        # self.raw_decimated = self.decimate(abf.sweepY[nanbool], self.ds)
+        self.raw_decimated = self.decimate(self._raw, self.ds)
+        self.time_vector = abf.sweepX[nanbool]
+        self.time_vector_decimated = self.decimate(abf.sweepX[nanbool], self.ds)
+
+    @staticmethod
+    def decimate(seq, ds):
+        if (trunc_len := len(seq) % ds):
+            seq_trunc = seq[:-trunc_len]
+        else:
+            seq_trunc = seq
+        return np.median(seq_trunc.reshape((-1, ds)), -1)
 
     def set_pos_events(self, fraction):
         """Find all events where current drops below theshold,
@@ -58,16 +87,26 @@ class AbfData:
         :param fraction: Fraction of baseline to use as cutoff for positive event
         :return: List of all indices in raw signal that contain positive events.
         """
+        if self.data_type == '.npz':
+            return self.pos_events
         cutoff = fraction * self.baseline_level
-        event_ids = np.where(self.raw < cutoff)[0]
-        # Ugly boiii
+        event_ids = np.where(self.raw_decimated < cutoff)[0]
         self.flat_pos_indices = event_ids
         step_list = np.diff(event_ids)
         cut_points = np.where(step_list > 1)[0]
         cut_points = cut_points + 1
         events = np.split(event_ids, cut_points)
         # Keep events only of certain length
-        return [event for event in events if 13 < len(event) < 5e4]
+        events_correct_length = [event for event in events
+                if self.min_duration <
+                self.time_vector_decimated[event[-1]] - self.time_vector_decimated[event[0]] + self.post_decimation_step_size
+                < self.max_duration]
+
+        event_durations = np.array([self.time_vector_decimated[event[-1]] - self.time_vector_decimated[
+            event[0]] + self.post_decimation_step_size
+                           for event in events_correct_length])
+
+        return events_correct_length
 
     def get_event_lengths(self):
         """Get duration of events"""
@@ -120,6 +159,8 @@ class AbfData:
         :param take_one: If true, return only one positive
         :return: list with positive events
         """
+        if self.data_type == '.npz':
+            return self.pos_events
         pos_list = []
         if take_one:
             random.shuffle(self.pos_events)
@@ -133,6 +174,33 @@ class AbfData:
                 pos_list.append(normalize_raw_signal(self.unfiltered_raw[start_idx: end_idx], self.normalization))
             else:
                 pos_list.append(normalize_raw_signal(self.raw[start_idx: end_idx], self.normalization))
+        return pos_list
+
+    def get_baseline(self):
+        out_list = []
+        start_idx = 0
+        for event in self.pos_events:
+            end_idx = event[0] - 15
+            out_list.append((self.unfiltered_raw[start_idx:end_idx]))
+            start_idx = event[-1] + 15
+        out_list.append(self.unfiltered_raw[start_idx:])
+        return out_list
+
+    def get_pos_blockade(self, unfiltered=False):
+        if self.data_type == '.npz':
+            return [np.mean(x) for x in self.pos_events]
+        pos_list = []
+        for event in self.pos_events:
+            # Provide a small part of the baseline before and after the event
+            start_idx = np.argmin(np.abs(self.time_vector - self.time_vector_decimated[event[0]])) - (self.ds // 2)
+            end_idx = np.argmin(np.abs(self.time_vector - self.time_vector_decimated[event[-1]])) + (self.ds // 2)
+            start_idx -= 15
+            end_idx += 15
+            if unfiltered:
+                snippet = normalize_raw_signal(self.unfiltered_raw[start_idx: end_idx], self.normalization)
+            else:
+                snippet = normalize_raw_signal(self.raw[start_idx: end_idx], self.normalization)
+            pos_list.append(np.mean(snippet))
         return pos_list
 
     def get_neg(self, width, nb_neg, unfiltered=False):

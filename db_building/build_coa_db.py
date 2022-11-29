@@ -8,8 +8,8 @@ import pandas as pd
 from db_building.AbfData import AbfData
 from db_building.CoaExampleDb import ExampleDb
 
-__location__ = dirname(Path(__file__).resolve())
-sys.path.extend([__location__, f'{__location__}/..'])
+__loc__ = dirname(Path(__file__).resolve())
+sys.path.extend([__loc__, f'{__loc__}/..'])
 
 from resources.helper_functions import parse_output_path, parse_input_path
 
@@ -20,7 +20,7 @@ def main(args):
         rmtree(out_path)
         Path(out_path).mkdir()
 
-    file_list = parse_input_path(args.abf_in, pattern='*.abf')
+    file_list = parse_input_path(args.abf_in, pattern='*.abf') + parse_input_path(args.abf_in, pattern='*.npz')
     db_name = out_path+'db.fs'
     copyfile(args.event_types, f'{out_path}event_types.yaml')
 

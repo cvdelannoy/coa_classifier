@@ -1,11 +1,11 @@
 import random
 from os.path import isfile
-
+from itertools import chain
 import ZODB
 import ZODB.FileStorage
 import numpy as np
 from persistent.mapping import PersistentMapping
-
+from sklearn.cluster import DBSCAN, OPTICS
 from db_building.AbfData import AbfData
 
 
@@ -67,7 +67,7 @@ class ExampleDb(object):
 
         return nb_new_positives
 
-    def get_training_set(self, size=None, oversampling=False):
+    def get_training_set(self, size=None, oversampling=False, noise_shift=0.0):
         """
         Return a balanced subset of reads from the DB
         :param size: number of reads to return
@@ -92,8 +92,9 @@ class ExampleDb(object):
             print(f'Using {nr_of_examples} examples per class')
             for coa, signals in conn.root.examples.items():
                 one_hot = self.coa_to_one_hot(coa)
-                signals_selected = list(np.random.choice(np.array(signals, dtype=object), size=nr_of_examples,
-                                                        replace=nr_of_examples > len(signals)))
+                signals_selected = [sig + np.random.normal(loc=0.0, scale=noise_shift) for sig in
+                                    np.random.choice(np.array(signals, dtype=object), size=nr_of_examples,
+                                                     replace=nr_of_examples > len(signals))]
                 training_set_x.extend(signals_selected)
                 training_set_y.extend([one_hot] * nr_of_examples)
 
@@ -133,3 +134,13 @@ class ExampleDb(object):
                 conn.root.examples = PersistentMapping()
         if self.nb_pos > 0:
             self._db_empty = False
+
+    def set_norm_params(self):
+        with self._db.transaction() as conn:
+            sig_list = list(chain.from_iterable([list(x) for x in conn.root.examples.values()]))
+        sig_concat = np.concatenate(sig_list)
+        med = np.median(sig_concat)
+        mad = np.median(np.abs(sig_concat - med))
+        with self._db.transaction() as conn:
+            conn.root.shift = med
+            conn.root.scale = mad
