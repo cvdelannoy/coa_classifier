@@ -3,6 +3,7 @@ from collections import Counter
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 from sklearn.metrics import confusion_matrix, balanced_accuracy_score
 from tensorflow.keras.preprocessing.sequence import pad_sequences
@@ -32,7 +33,7 @@ class CoaInference:
         self.target_to_index = {x: i for i, x in enumerate(np.unique(list(self.event_type_dict.values())))}
         self.index_to_target = {v: k for k, v in self.target_to_index.items()}
 
-    def predict_from_file(self, abf_path, bootstrap=False, return_traces=False):
+    def predict_from_file(self, abf_path, bootstrap=False):
         """Counts cOAs in single input file
 
         :param abf_path: path to .abf file
@@ -47,6 +48,7 @@ class CoaInference:
                       baseline_fraction=0.65,
                       event_type_dict=self.event_type_dict)
         events = abf.get_pos(unfiltered=False)
+        event_lens = [len(ev) - 100 for ev in events]
         x_pad = np.expand_dims(pad_sequences(events, maxlen=self.input_length,
                                              padding='post', truncating='post',
                                              dtype='float32'), -1)
@@ -59,9 +61,7 @@ class CoaInference:
             y_hat = self.nn.predict(x_pad)
         y_hat = np.argmax(y_hat, axis=1)
         y_pred = [self.index_to_target[i] for i in y_hat]
-        if return_traces:
-            return y_pred, x_pad
-        return y_pred
+        return y_pred, x_pad, event_lens
 
 
 def run_inference(abf_in, nn_path, out_dir, bootstrap, save_traces):
@@ -79,16 +79,19 @@ def run_inference(abf_in, nn_path, out_dir, bootstrap, save_traces):
 
     y_true = []
     y_pred_list = []
+    el_list = []
+    abf_fn_list = []
 
     abf_list = parse_input_path(abf_in, pattern='*.abf') + parse_input_path(abf_in, pattern='*.npz')
 
     for i, abf in enumerate(abf_list):
         abf = Path(abf)
         print(f'Processing {abf.name}')
-        y_pred = inference_model.predict_from_file(abf, bootstrap, save_traces)
-        if save_traces:
-            y_pred, x_traces = y_pred
+
+        y_pred, x_traces, event_lens = inference_model.predict_from_file(abf, bootstrap)
         y_pred_list.extend(y_pred)
+        el_list.extend(event_lens)
+        abf_fn_list.extend([abf.stem] * len(y_pred))
         label_list = list(inference_model.index_to_target.values())
         true_coa = inference_model.event_type_dict.get(abf.name[:4].lower(), abf.name[:4].lower())
         if not true_coa.lower().startswith('coa'):
@@ -123,6 +126,9 @@ def run_inference(abf_in, nn_path, out_dir, bootstrap, save_traces):
     np.savetxt(out_dir + 'confmat.csv', conf_mat)
     with open(out_dir + 'confmat_labels.txt', 'w') as fh: fh.write('\n'.join(list(label_list)))
     pred_counts = Counter(y_pred_list)
+
+    el_df = pd.DataFrame({'fn': abf_fn_list, 'event_len': el_list, 'predicted_class': y_pred_list})
+    el_df.to_csv(f'{out_dir}classification_raw.csv')
 
     with open(out_dir + 'summary_stats.yaml', 'w') as fh:
         fh.write(f'balanced_accuracy: {balanced_accuracy_score(y_true, y_pred_list)}\n')
