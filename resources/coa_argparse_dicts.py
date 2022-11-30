@@ -34,7 +34,7 @@ parameter_file = ('--parameter-file', {
     'type': str,
     'required': False,
     'default': os.path.join(__location__,
-                            '../nns/hyperparams/CnnParameterFile_coa.yaml'),
+                            '../nns/hyperparams/CnnParameterFile_explicitLength_coa.yaml'),
     'help': 'a yaml-file containing NN parameters. If none supplied, default values are used.'})
 
 # --- outputs ---
@@ -174,13 +174,19 @@ def get_build_db_parser():
         parser.add_argument(arg[0], **arg[1])
     return parser
 
+def get_run_evaluation_parser():
+    nb_folds = ('--nb-folds', {
+        'type': int,
+        'default': 5,
+        'help': 'Number of cross validation folds to make [default: 5]'
+    })
+
+    parser = argparse.ArgumentParser(description='Run classifier evaluation pipeline with cross-validation')
+    for arg in (abf_in, out_dir, cores, parameter_file, event_types, nb_folds):
+        parser.add_argument(arg[0], **arg[1])
+    return parser
 
 def get_run_inference_parser():
-    abf_in = ('--abf-in', {
-        'type': str,
-        'required': True,
-        'help': 'abf file or folder containing abf files'
-    })
     nn_dir = ('--nn-path', {
         'type': Path,
         'required': True,
