@@ -5,6 +5,7 @@ import sys
 import run_inference
 import run_inference_bootstrap
 import run_production_pipeline
+import run_evaluation
 import train_coa_nn
 from db_building import build_coa_db
 from resources import coa_argparse_dicts as argparse_dicts
@@ -35,6 +36,10 @@ def main(args=None):
          'Bootstrap the inference routine',
          argparse_dicts.get_run_inference_bootstrap_parser(),
          run_inference_bootstrap.main),
+        ('run_evaluation',
+         'Run classifier evaluation pipeline with cross-validation',
+         argparse_dicts.get_run_evaluation_parser(),
+         run_evaluation.main)
     ]
 
     parser = argparse.ArgumentParser(

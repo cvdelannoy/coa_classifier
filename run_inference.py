@@ -64,7 +64,7 @@ class CoaInference:
         return y_pred
 
 
-def main(args):
+def run_inference(abf_in, nn_path, out_dir, bootstrap, save_traces):
     # if args.no_gpu:
     #     # Limit resources
     #     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
@@ -75,18 +75,18 @@ def main(args):
     #     tf.config.threading.set_inter_op_parallelism_threads(1)
     #     tf.config.set_soft_device_placement(True)
 
-    inference_model = CoaInference(args.nn_path)
+    inference_model = CoaInference(nn_path)
 
     y_true = []
     y_pred_list = []
 
-    abf_list = parse_input_path(args.abf_in, pattern='*.abf') + parse_input_path(args.abf_in, pattern='*.npz')
+    abf_list = parse_input_path(abf_in, pattern='*.abf') + parse_input_path(abf_in, pattern='*.npz')
 
     for i, abf in enumerate(abf_list):
         abf = Path(abf)
         print(f'Processing {abf.name}')
-        y_pred = inference_model.predict_from_file(abf, args.bootstrap, args.save_traces)
-        if args.save_traces:
+        y_pred = inference_model.predict_from_file(abf, bootstrap, save_traces)
+        if save_traces:
             y_pred, x_traces = y_pred
         y_pred_list.extend(y_pred)
         label_list = list(inference_model.index_to_target.values())
@@ -95,9 +95,9 @@ def main(args):
             # Looking at file of unknown type
             true_coa = 'UNKNOWN'
             label_list += ['UNKNOWN']
-        if args.save_traces:
+        if save_traces:
             abf_id = os.path.splitext(abf.name)[0]
-            plot_dir_dict = {class_id: parse_output_path(f'{args.out_dir}{abf_id}/{class_id}/')
+            plot_dir_dict = {class_id: parse_output_path(f'{out_dir}{abf_id}/{class_id}/')
                              for class_id in np.unique(y_pred)}
             fig, (ax_t, ax_f) = plt.subplots(2,1, figsize=(10,10))
             x = np.arange(x_traces.shape[1])
@@ -110,24 +110,26 @@ def main(args):
                     ax_t.plot(x,xt)
                 else:
                     ax_f.plot(x, xt)
-            fig.savefig(f'{args.out_dir}{abf_id}/all_traces.svg')
+            fig.savefig(f'{out_dir}{abf_id}/all_traces.svg')
             plt.close(fig)
             y_pred_idx = [f'{yi},{yp}' for yi, yp in enumerate(y_pred)]
-            with open(f'{args.out_dir}{abf_id}/prediction.csv', 'w') as fh:
+            with open(f'{out_dir}{abf_id}/prediction.csv', 'w') as fh:
                 fh.write('\n'.join(y_pred_idx))
-            np.save(f'{args.out_dir}{abf_id}/traces.npy', x_traces)
+            np.save(f'{out_dir}{abf_id}/traces.npy', x_traces)
         y_true.extend([true_coa] * len(y_pred))
         # print("Y pred", y_pred)
         # print('Y true', y_true)
     conf_mat = confusion_matrix(y_true, y_pred_list, labels=label_list)
-    np.savetxt(args.out_dir + 'confmat.csv', conf_mat)
-    with open(args.out_dir + 'confmat_labels.txt', 'w') as fh: fh.write('\n'.join(list(label_list)))
+    np.savetxt(out_dir + 'confmat.csv', conf_mat)
+    with open(out_dir + 'confmat_labels.txt', 'w') as fh: fh.write('\n'.join(list(label_list)))
     pred_counts = Counter(y_pred_list)
 
-    with open(args.out_dir + 'summary_stats.yaml', 'w') as fh:
+    with open(out_dir + 'summary_stats.yaml', 'w') as fh:
         fh.write(f'balanced_accuracy: {balanced_accuracy_score(y_true, y_pred_list)}\n')
         for key, value in pred_counts.items():
             fh.write(f"{key}: {value}\n")
     print(conf_mat)
     print('Balanced accuracy', balanced_accuracy_score(y_true, y_pred_list))
 
+def main(args):
+    run_inference(args.abf_in, args.nn_path, args.out_dir, args.bootstrap, args.save_traces)
