@@ -85,6 +85,12 @@ normalize_rates = ('--normalize-rates', {
     'help': 'For mixtures, normalize measured abundances for difference in capture rates.'
 })
 
+bootstrap_iters = ('--bootstrap-iters', {
+    'type': int,
+    'default': 100,
+    'help': 'Number of bootstrap iterations to perform [default: 100]'
+})
+
 # --- PARSERS ---
 def get_run_production_pipeline_parser():
 
@@ -214,12 +220,6 @@ def get_run_inference_parser():
     return parser
 
 def get_run_inference_bootstrap_parser():
-    bootstrap_iters = ('--bootstrap-iters', {
-        'type': int,
-        'default': 100,
-        'help': 'Number of bootstrap iterations to perform [default: 100]'
-    })
-
     cores = ('--cores', {
         'type': int,
         'default': 4,
@@ -233,6 +233,18 @@ def get_run_inference_bootstrap_parser():
 
     parser = get_run_inference_parser()
     for arg in (bootstrap_iters, cores, normalize_rates, error_correct_rates):
+        parser.add_argument(arg[0], **arg[1])
+    return parser
+
+def get_run_inference_cv_parser():
+    nn_dir = ('--nn-dir', {
+        'type': Path,
+        'required': True,
+        'help': 'Path to folder containing trained models as .h5 files'
+    })
+
+    parser = argparse.ArgumentParser(description='Run inference using a number of nns trained on different folds')
+    for arg in (abf_in, out_dir, bootstrap_iters, nn_dir, cores):
         parser.add_argument(arg[0], **arg[1])
     return parser
 

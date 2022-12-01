@@ -15,9 +15,9 @@ __coa_classifier__ = str(Path(__file__).resolve().parents[1])
 def run_inference_performance_analysis(inference_dir, analysis_dir, normalize_rates, error_correct_rates):
     # --- combine results ---
     analysis_dir = parse_output_path(analysis_dir)
-    confmat_array = np.dstack([np.loadtxt(fn) for fn in glob(f'{inference_dir}*/confmat.csv')])
+    confmat_array = np.dstack([np.loadtxt(fn) for fn in glob(f'{inference_dir}*/*/*/confmat.csv')])
     labels_list = []
-    for fn in glob(f'{inference_dir}*/confmat_labels.txt'):
+    for fn in glob(f'{inference_dir}*/*/*/confmat_labels.txt'):
         with open(fn, 'r') as fh: labels_list.append([ll.strip() for ll in fh.readlines()])
     assert np.all([np.all(labels_list[0] == ll) for ll in labels_list])
     labels = labels_list[0]
@@ -59,8 +59,11 @@ def run_inference_performance_analysis(inference_dir, analysis_dir, normalize_ra
     
     # Collect summary_stats
     stats_list = []
-    for fn in glob(f'{inference_dir}*/summary_stats.yaml'):
-        with open(fn, 'r') as fh: stats_list.append(yaml.load(fh, yaml.FullLoader))
+    for fn in glob(f'{inference_dir}*/*/*/summary_stats.yaml'):
+        with open(fn, 'r') as fh:
+            tmp_dict = yaml.load(fh, yaml.FullLoader)
+        ss_dict = {l: tmp_dict.get(l, 0) for l in labels}
+        stats_list.append(ss_dict)
     stats_names = list(stats_list[0])
     nb_stats_files = len(stats_list)
     raw_tup_list = []
