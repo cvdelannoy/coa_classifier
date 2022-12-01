@@ -69,6 +69,4 @@ def main(args):
         # Inference: run snakemake pipeline
         run_inference(abf_test_dir, f'{nn_dir}nn.h5', inference_dir, False, False)
 
-    run_inference_performance_analysis(meta_inference_dir, f'{args.out_dir}analysis', True, False)
-
-    cp=1
+    run_inference_performance_analysis(meta_inference_dir, f'{args.out_dir}analysis', False, False)

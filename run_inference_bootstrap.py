@@ -12,10 +12,12 @@ from resources.helper_functions import parse_output_path
 
 __location__ = str(Path(__file__).resolve().parents[0])
 
-def main(args):
-    _ = parse_output_path(args.out_dir, clean=True)
-    bs_dir = parse_output_path(args.out_dir + 'bootstrapped_results')
-    log_dir = parse_output_path(args.out_dir + 'logs')
+def run_inference_bootstrapped(abf_in, nn_path, out_dir,
+                               bootstrap_iters, normalize_rates, error_correct_rates,
+                               cores, analyse):
+    _ = parse_output_path(out_dir, clean=True)
+    bs_dir = parse_output_path(out_dir + 'bootstrapped_results')
+    log_dir = parse_output_path(out_dir + 'logs')
 
 
     with open(__location__ + '/run_inference_bootstrap.sf') as fh:
@@ -24,17 +26,18 @@ def main(args):
         __location__=__location__,
         bs_dir=bs_dir,
         log_dir=log_dir,
-        nn_path=args.nn_path,
-        abf_in=args.abf_in,
-        bootstrap_iters=args.bootstrap_iters
+        nn_path=nn_path,
+        abf_in=abf_in,
+        bootstrap_iters=bootstrap_iters
     )
-    sf_fn = args.out_dir + 'run_inference_bootstrap.sf'
+    sf_fn = out_dir + 'run_inference_bootstrap.sf'
     with open(sf_fn, 'w') as fh: fh.write(sm_txt_out)
 
-    snakemake(snakefile=sf_fn, cores=args.cores, keepgoing=True)
-
+    snakemake(snakefile=sf_fn, cores=cores, keepgoing=True)
+    if not analyse:
+        return
     # --- combine results ---
-    analysis_dir = parse_output_path(args.out_dir + 'analysis')
+    analysis_dir = parse_output_path(out_dir + 'analysis')
     confmat_array = np.dstack([np.loadtxt(fn) for fn in glob(f'{bs_dir}*/confmat.csv')])
     labels_list = []
     for fn in glob(f'{bs_dir}*/confmat_labels.txt'):
@@ -44,7 +47,7 @@ def main(args):
     labels_array = np.array(labels)
     np.save(f'{analysis_dir}confmats.npy', confmat_array)
 
-    if args.error_correct_rates:
+    if error_correct_rates:
         with open(f'{__location__}/resources/error_correction_rates.yaml', 'r') as fh:
             ec_dict = yaml.load(fh, yaml.FullLoader)
         # new_array = confmat_array[-1,:,:,:]
@@ -57,7 +60,7 @@ def main(args):
                 ec_array[:, ci2, :] = confmat_array[:, ci1, :] * ec_dict[c1][c2]
         confmat_array = confmat_array + ec_array
 
-    if args.normalize_rates:
+    if normalize_rates:
         with open(f'{__location__}/resources/coa_rates.yaml', 'r') as fh:
             rates_dict = yaml.load(fh, yaml.FullLoader)
         rates_vec = np.array([rates_dict.get(l, 1.0) for l in labels])
@@ -102,3 +105,8 @@ def main(args):
     ax.legend(title='frac')
     plt.savefig(f'{analysis_dir}heatmap.svg', dpi=400)
     plt.close(fig)
+
+def main(args):
+    run_inference_bootstrapped(args.abf_in, args.nn_path, args.out_dir,
+                               args.bootstrap_iters, args.normalize_rates, args.error_correct_rates,
+                               args.cores, True)

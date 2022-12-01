@@ -2,8 +2,7 @@
 import argparse
 import sys
 
-import run_inference
-import run_inference_bootstrap
+import run_inference, run_inference_bootstrap, run_inference_cv
 import run_production_pipeline
 import run_evaluation
 import train_coa_nn
@@ -36,6 +35,10 @@ def main(args=None):
          'Bootstrap the inference routine',
          argparse_dicts.get_run_inference_bootstrap_parser(),
          run_inference_bootstrap.main),
+        ('run_inference_cv',
+         'Run inference using a number of nns trained on different folds',
+         argparse_dicts.get_run_inference_cv_parser(),
+         run_inference_cv.main),
         ('run_evaluation',
          'Run classifier evaluation pipeline with cross-validation',
          argparse_dicts.get_run_evaluation_parser(),
