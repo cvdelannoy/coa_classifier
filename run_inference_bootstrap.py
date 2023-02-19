@@ -7,7 +7,7 @@ from jinja2 import Template
 from pathlib import Path
 from glob import glob
 import yaml
-
+from itertools import chain
 from resources.helper_functions import parse_output_path
 
 __location__ = str(Path(__file__).resolve().parents[0])
@@ -61,7 +61,7 @@ def run_inference_bootstrapped(abf_in, nn_path, out_dir,
         confmat_array = confmat_array + ec_array
 
     if normalize_rates:
-        with open(f'{__location__}/resources/coa_rates.yaml', 'r') as fh:
+        with open(f'{__location__}/resources/coa_rates_txt.yaml', 'r') as fh:
             rates_dict = yaml.load(fh, yaml.FullLoader)
         rates_vec = np.array([rates_dict.get(l, 1.0) for l in labels])
         rates_vec = np.expand_dims(np.expand_dims(rates_vec, 0), -1)
@@ -84,12 +84,12 @@ def run_inference_bootstrapped(abf_in, nn_path, out_dir,
     stats_list = []
     for fn in glob(f'{bs_dir}*/summary_stats.yaml'):
         with open(fn, 'r') as fh: stats_list.append(yaml.load(fh, yaml.FullLoader))
-    stats_names = list(stats_list[0])
+    stats_names = set(list(chain.from_iterable([list(sl) for sl in stats_list])))
     nb_stats_files = len(stats_list)
     raw_tup_list = []
     tup_list = []
     for sn in stats_names:
-        val_list = [sl[sn] for sl in stats_list]
+        val_list = [sl.get(sn, 0) for sl in stats_list]
         raw_tup_list.append(pd.Series({f'bs{vi}': v for vi, v in enumerate(val_list)}, name=sn))
         tup_list.append(pd.Series({'stat_mean': np.mean(val_list), 'stat_std': np.std(val_list)}, name=sn))
     stats_df = pd.concat(tup_list, axis=1).T

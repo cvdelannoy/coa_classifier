@@ -34,5 +34,5 @@ ref_df = pd.DataFrame({'coa_type': args.class_names, 'frac': args.ref_values, 'b
 df = pd.concat((est_df, ref_df))
 
 df.to_csv(f'{basename(args.out_svg)}.csv')
-sns.barplot(y='frac', x='coa_type', hue='value_type', data=df)
+sns.barplot(y='frac', x='coa_type', hue='value_type', data=df, errorbar=('sd', 1.0))
 plt.savefig(args.out_svg)

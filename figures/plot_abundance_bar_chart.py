@@ -15,7 +15,7 @@ def parse_summary_yaml(file):
 
 def main(bootstrapped_out_dir, coa_abundances):
     master_dict = {}
-    for file in bootstrapped_out_dir.glob('bs_?/summary_stats.yaml'):
+    for file in bootstrapped_out_dir.glob('**/bs_?/summary_stats.yaml'):
         summary = parse_summary_yaml(file)
         total = sum(summary.values())
         for key, value in summary.items():

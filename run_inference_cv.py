@@ -10,7 +10,7 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 def main(args):
     nn_list = parse_input_path(args.nn_dir, pattern='*.h5')
     nn_list.sort()
-    bootstrap_iters_per_model = args.bootstrap_iters // len(nn_list)
+    bootstrap_iters_per_model = max(args.bootstrap_iters // len(nn_list), 1)
     out_dir = parse_output_path(args.out_dir, clean=True)
     inference_dir = parse_output_path(f'{out_dir}inference')
     for nni, nn in enumerate(nn_list):
