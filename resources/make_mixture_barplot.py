@@ -16,6 +16,7 @@ parser.add_argument('--npy-in', type=str,required=True,
                     help='confmats_normalized.npy produced by run_inference_bootstrapped')
 parser.add_argument('--class-names', type=str, required=True, nargs='+')
 parser.add_argument('--ref-values', type=float, required=True, nargs='+')
+parser.add_argument('--interval', type=str, choices=['ci95', 'pi95', 'sd2'], default='ci95')
 parser.add_argument('--out-svg', type=str, required=True)
 args = parser.parse_args()
 
@@ -34,5 +35,6 @@ ref_df = pd.DataFrame({'coa_type': args.class_names, 'frac': args.ref_values, 'b
 df = pd.concat((est_df, ref_df))
 
 df.to_csv(f'{basename(args.out_svg)}.csv')
-sns.barplot(y='frac', x='coa_type', hue='value_type', data=df, errorbar=('sd', 1.0))
+sns.barplot(y='frac', x='coa_type', hue='value_type', data=df,
+            errorbar=(args.interval[:2], float(args.interval[2:])))
 plt.savefig(args.out_svg)

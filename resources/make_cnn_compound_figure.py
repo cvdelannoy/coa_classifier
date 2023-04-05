@@ -10,11 +10,14 @@ if dir[-1] != '/': dir += '/'
 fig, bp_axes = plt.subplots(1,3, figsize=(10,4), sharey=True)
 
 fn_list = [dir + fn for fn in os.listdir(dir)]
-bp_fn_list = [fn for fn in fn_list if os.path.basename(fn).startswith('barplot')]
+bp_fn_list = [fn for fn in fn_list if
+              os.path.basename(fn).startswith('barplot')
+              and os.path.basename(fn).endswith('.csv')]
 bpdf_list = []
 
 def ci_fun(x):
-    sf = x.std() / np.sqrt(len(x)) * 1.96
+    # sf = x.std() / np.sqrt(len(x)) * 1.96
+    sf = x.std() * 1.96
     return x.mean() - sf, x.mean() + sf
 
 for bi, bp_fn in enumerate(bp_fn_list):
@@ -24,10 +27,7 @@ for bi, bp_fn in enumerate(bp_fn_list):
     sns.barplot(y='frac', x='coa_type', hue='value_type',
                 data=bpdf, ax=bp_axes[bi],
                 errwidth=1.5, capsize=0.1,
-                errorbar=ci_fun,
-                # palette='Blues',
-                # palette={'estimate': 'grey', 'ref': 'white'}
-                )
+                errorbar=('pi', 95.0))
     bp_axes[bi].get_legend().remove()
 
 tick_step = 0.25
