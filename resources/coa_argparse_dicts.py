@@ -77,7 +77,7 @@ cores = ('--cores', {
 
 event_types = ('--event-types', {
     'type': str,
-    'default': __location__ + '/../coa_types/coa_types_4.yaml'
+    'default': __location__ + '/../coa_types/coa_types_3.yaml'
 })
 
 normalize_rates = ('--normalize-rates', {
@@ -183,8 +183,8 @@ def get_build_db_parser():
 def get_run_evaluation_parser():
     nb_folds = ('--nb-folds', {
         'type': int,
-        'default': 5,
-        'help': 'Number of cross validation folds to make [default: 5]'
+        'default': 10,
+        'help': 'Number of cross validation folds to make [default: 10]'
     })
 
     parser = argparse.ArgumentParser(description='Run classifier evaluation pipeline with cross-validation')
