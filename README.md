@@ -32,7 +32,7 @@ python coa_classifier run_evaluation \
     
 ```
 
-This will train a CNN on non-overlapping folds and test it on the held-out fold. The model is also trained once on the entire dataset for subsequent usage. All models are stored in the output directory, under  Note that each trace can only provide events to a single-fold, thus avoiding the risk of inflating accuracy measures due to learning of trace-specific features.
+This will train a CNN on non-overlapping folds and test it on the held-out fold. All models are stored in the output directory under `nns`; for each bootstrap iteration a model file called `nn.h5`  can be found. Note that each trace can only provide events to a single-fold, thus avoiding the risk of inflating accuracy measures due to learning of trace-specific features.
 
 Some extra options are available:
 - `--parameter-file`: choose a different neural network architecture by providing a yaml file. available yaml files are in `nns/hyperparams`. By default `CnnParameterFile_explicitLength_coa.yaml` is used.
